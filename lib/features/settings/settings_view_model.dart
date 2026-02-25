@@ -81,23 +81,30 @@ class SettingsViewModel extends ChangeNotifier {
     isValidating = true;
     notifyListeners();
 
-    await _secureStorage.setApiKey(key);
+    // Temporarily use new key for validation without persisting.
+    final previousKey = await _secureStorage.getApiKey();
     _apiClient.updateApiKey(key);
 
     try {
       final valid = await _apiClient.validateApiKey();
       if (valid) {
+        // Only persist after successful validation.
+        await _secureStorage.setApiKey(key);
         hasApiKey = true;
         maskedApiKey = _maskKey(key);
         apiKeyStatus = ApiKeyStatus.valid;
         apiKeyStatusMessage = 'Validated successfully';
         isEditing = false;
       } else {
+        // Restore previous key.
+        _apiClient.updateApiKey(previousKey ?? '');
         apiKeyStatus = ApiKeyStatus.invalid;
         apiKeyStatusMessage =
             "This key didn't work — check it and try again";
       }
     } catch (_) {
+      // Restore previous key on network failure.
+      _apiClient.updateApiKey(previousKey ?? '');
       apiKeyStatus = ApiKeyStatus.unverified;
       apiKeyStatusMessage =
           "Couldn't verify key. Please check your connection.";

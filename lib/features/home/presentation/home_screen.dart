@@ -46,15 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _showNoApiKeySheet();
       return;
     }
-    if (!_viewModel.hasMicPermission) {
-      final status = await Permission.microphone.request();
-      if (status.isGranted) {
-        _viewModel.checkPermissions();
-      } else {
-        if (mounted) _showPermissionDialog('Microphone');
-        return;
-      }
-    }
+    if (!await _ensurePermission(Permission.microphone, 'Microphone')) return;
     if (mounted) context.push(RoutePaths.speech);
   }
 
@@ -63,15 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _showNoApiKeySheet();
       return;
     }
-    if (!_viewModel.hasCameraPermission) {
-      final status = await Permission.camera.request();
-      if (status.isGranted) {
-        _viewModel.checkPermissions();
-      } else {
-        if (mounted) _showPermissionDialog('Camera');
-        return;
-      }
-    }
+    if (!await _ensurePermission(Permission.camera, 'Camera')) return;
     if (mounted) context.push(RoutePaths.photo);
   }
 
@@ -81,6 +65,24 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
     context.push(RoutePaths.text);
+  }
+
+  /// Requests the given [permission] if not already granted.
+  ///
+  /// Returns true if the permission is granted, false otherwise. Shows a
+  /// dialog to guide the user to Settings on permanent denial.
+  Future<bool> _ensurePermission(
+    Permission permission,
+    String permissionName,
+  ) async {
+    if (await permission.isGranted) return true;
+    final status = await permission.request();
+    if (status.isGranted) {
+      _viewModel.checkPermissions();
+      return true;
+    }
+    if (mounted) _showPermissionDialog(permissionName);
+    return false;
   }
 
   void _showNoApiKeySheet() {

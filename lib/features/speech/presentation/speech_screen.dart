@@ -4,6 +4,7 @@ import '../../../core/service_locator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../shared/models/speech_state.dart';
+import '../../../shared/widgets/app_snackbar.dart';
 import '../../../shared/widgets/language_toggle_pill.dart';
 import '../speech_view_model.dart';
 import 'widgets/mic_button.dart';
@@ -50,33 +51,11 @@ class _SpeechScreenState extends State<SpeechScreen> {
   }
 
   void _showCopiedSnackBar() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.check_circle, color: Color(0xFF81C784), size: 20),
-            SizedBox(width: 8),
-            Text('Copied to clipboard'),
-          ],
-        ),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    AppSnackbar.success(context, 'Copied to clipboard');
   }
 
   void _showSavedSnackBar() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.check_circle, color: Color(0xFF81C784), size: 20),
-            SizedBox(width: 8),
-            Text('Saved to History'),
-          ],
-        ),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    AppSnackbar.success(context, 'Saved to History');
   }
 
   @override

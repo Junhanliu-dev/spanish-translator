@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
@@ -33,6 +34,8 @@ class SpeechViewModel extends ChangeNotifier {
   final LanguagePrefsNotifier _languagePrefs;
   final AudioRecorder _recorder;
   final AudioPlayer _player;
+  StreamSubscription<void>? _playerSubscription;
+  bool _isDisposed = false;
 
   // --- State ---
   SpeechState state = SpeechState.idle;
@@ -58,11 +61,12 @@ class SpeechViewModel extends ChangeNotifier {
     if (!hasPermission) {
       errorMessage = 'Microphone access is required for speech translation.';
       state = SpeechState.error;
-      notifyListeners();
+      _safeNotify();
       await Future<void>.delayed(const Duration(milliseconds: 1500));
+      if (_isDisposed) return;
       state = SpeechState.idle;
       errorMessage = null;
-      notifyListeners();
+      _safeNotify();
       return;
     }
 
@@ -135,17 +139,23 @@ class SpeechViewModel extends ChangeNotifier {
       pronunciation = response.pronunciation;
       notifyListeners();
 
-      // Step 3: Generate TTS audio.
+      // Step 3: Clean up previous TTS file and generate new one.
+      if (_audioFilePath != null) {
+        try {
+          await File(_audioFilePath!).delete();
+        } catch (_) {}
+      }
       _audioFilePath = await _apiClient.textToSpeech(
         text: response.translatedText,
         speed: 0.9,
       );
 
       state = SpeechState.success;
-      notifyListeners();
+      _safeNotify();
 
       // Step 4: Auto-play TTS after a brief delay so the user can read first.
       await Future<void>.delayed(const Duration(seconds: 1));
+      if (_isDisposed) return;
       await playTTS();
 
       // Clean up the recording file.
@@ -157,13 +167,14 @@ class SpeechViewModel extends ChangeNotifier {
     } catch (e) {
       state = SpeechState.error;
       errorMessage = mapErrorToMessage(e);
-      notifyListeners();
+      _safeNotify();
 
       // Auto-recover to idle after 1.5 seconds.
       await Future<void>.delayed(const Duration(milliseconds: 1500));
+      if (_isDisposed) return;
       state = SpeechState.idle;
       errorMessage = null;
-      notifyListeners();
+      _safeNotify();
     }
   }
 
@@ -173,17 +184,18 @@ class SpeechViewModel extends ChangeNotifier {
 
     try {
       isTTSPlaying = true;
-      notifyListeners();
+      _safeNotify();
 
-      _player.onPlayerComplete.listen((_) {
+      _playerSubscription?.cancel();
+      _playerSubscription = _player.onPlayerComplete.listen((_) {
         isTTSPlaying = false;
-        notifyListeners();
+        _safeNotify();
       });
 
       await _player.play(DeviceFileSource(_audioFilePath!));
     } catch (_) {
       isTTSPlaying = false;
-      notifyListeners();
+      _safeNotify();
     }
   }
 
@@ -253,22 +265,23 @@ class SpeechViewModel extends ChangeNotifier {
   }
 
   String _languageCodeToName(String code) {
-    switch (code) {
-      case 'en':
-        return 'English';
-      case 'zh':
-        return 'Mandarin';
-      case 'es':
-        return 'Spanish';
-      case 'eu':
-        return 'Basque';
-      default:
-        return code.toUpperCase();
-    }
+    return switch (code) {
+      'en' => 'English',
+      'zh' => 'Mandarin',
+      'es' => 'Spanish',
+      'eu' => 'Basque',
+      _ => code.toUpperCase(),
+    };
+  }
+
+  void _safeNotify() {
+    if (!_isDisposed) notifyListeners();
   }
 
   @override
   void dispose() {
+    _isDisposed = true;
+    _playerSubscription?.cancel();
     _recorder.dispose();
     _player.dispose();
     super.dispose();

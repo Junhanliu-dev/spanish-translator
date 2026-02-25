@@ -37,7 +37,7 @@ class ConnectivityBanner extends StatelessWidget {
                 color: AppColors.white,
               ),
               const SizedBox(width: 8),
-              Text(
+              const Text(
                 'No internet connection',
                 style: TextStyle(
                   fontFamily: 'DM Sans',

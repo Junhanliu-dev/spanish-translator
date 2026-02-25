@@ -16,6 +16,9 @@ class HistoryRepository {
     _db = await openDatabase(
       p.join(dbPath, 'linguaviaje.db'),
       version: 1,
+      onConfigure: (db) async {
+        await db.execute('PRAGMA foreign_keys = ON');
+      },
       onCreate: _createTables,
     );
   }

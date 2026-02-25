@@ -72,11 +72,20 @@ class OpenAIClient {
     _dio.options.headers['Authorization'] = 'Bearer $apiKey';
   }
 
+  /// Throws [ApiKeyException] if no API key is configured.
+  void _requireApiKey() {
+    final auth = _dio.options.headers['Authorization'] as String?;
+    if (auth == null || auth == 'Bearer ' || auth == 'Bearer') {
+      throw ApiKeyException('No API key configured. Add one in Settings.');
+    }
+  }
+
   /// Transcribe audio to text using Whisper.
   /// Returns (transcribedText, detectedLanguage).
   Future<(String text, String language)> transcribe({
     required String audioFilePath,
   }) async {
+    _requireApiKey();
     try {
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(
@@ -110,6 +119,7 @@ class OpenAIClient {
     required String targetLanguage,
     String? contextHint,
   }) async {
+    _requireApiKey();
     final systemPrompt = '''
 You are a translator specializing in food and restaurant conversations in Spain
 and Basque Country. Translate the following spoken text from $sourceLanguage
@@ -173,6 +183,7 @@ Respond ONLY with a JSON object:
     required String base64Image,
     required String targetLanguage,
   }) async {
+    _requireApiKey();
     final systemPrompt = '''
 You are a specialist in translating Spanish and Basque restaurant menus for
 travelers. Analyze the following menu image.
@@ -290,6 +301,7 @@ Respond ONLY with a JSON object:
     String voice = 'nova',
     double speed = 0.9,
   }) async {
+    _requireApiKey();
     try {
       final response = await _dio.post(
         OpenAIEndpoints.textToSpeech,

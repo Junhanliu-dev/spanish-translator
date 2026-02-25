@@ -46,7 +46,6 @@ Future<void> main() async {
 
   // Create router.
   final router = createRouter(
-    hasApiKey: apiKey != null,
     onboardingComplete: onboardingComplete,
   );
 

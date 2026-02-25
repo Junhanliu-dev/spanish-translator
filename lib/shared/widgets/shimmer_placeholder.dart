@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_durations.dart';
 import '../../core/theme/app_theme_extension.dart';
 
 /// A shimmer loading placeholder that sweeps left-to-right.
@@ -36,7 +37,7 @@ class _ShimmerPlaceholderState extends State<ShimmerPlaceholder>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),
+      duration: AppDurations.shimmer,
     )..repeat();
   }
 

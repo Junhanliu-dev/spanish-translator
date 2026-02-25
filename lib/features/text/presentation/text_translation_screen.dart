@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/service_locator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../shared/widgets/app_snackbar.dart';
 import '../../../shared/widgets/language_toggle_pill.dart';
 import '../text_view_model.dart';
 import 'widgets/clipboard_paste_banner.dart';
@@ -91,18 +92,7 @@ class _TextTranslationScreenState extends State<TextTranslationScreen>
   }
 
   void _showCopiedSnackBar() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.check_circle, color: Color(0xFF81C784), size: 20),
-            SizedBox(width: 8),
-            Text('Copied to clipboard'),
-          ],
-        ),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    AppSnackbar.success(context, 'Copied to clipboard');
   }
 
   @override

@@ -19,7 +19,6 @@ import 'route_names.dart';
 
 /// Creates the application [GoRouter] configuration.
 GoRouter createRouter({
-  required bool hasApiKey,
   required bool onboardingComplete,
 }) {
   return GoRouter(
