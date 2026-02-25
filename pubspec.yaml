@@ -1,0 +1,54 @@
+name: lingua_viaje
+description: Food translation app for travelers in Spain and Basque Country.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Navigation
+  go_router: ^14.8.1
+
+  # HTTP
+  dio: ^5.7.0
+
+  # Storage
+  flutter_secure_storage: ^9.2.4
+  shared_preferences: ^2.3.5
+  sqflite: ^2.4.1
+  path: ^1.9.1
+
+  # Audio
+  record: ^6.2.0
+  audioplayers: ^6.1.0
+
+  # Camera & Image
+  image_picker: ^1.1.2
+  image: ^4.5.2
+
+  # Permissions
+  permission_handler: ^11.3.1
+
+  # Connectivity
+  connectivity_plus: ^6.1.1
+
+  # UI & Theming
+  google_fonts: ^6.2.1
+  flutter_animate: ^4.5.0
+
+  # Utilities
+  url_launcher: ^6.3.1
+  path_provider: ^2.1.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true
