@@ -23,11 +23,13 @@ class SpeechViewModel extends ChangeNotifier {
     required OpenAIClient apiClient,
     required HistoryRepository historyRepo,
     required LanguagePrefsNotifier languagePrefs,
+    AudioRecorder? recorder,
+    AudioPlayer? player,
   })  : _apiClient = apiClient,
         _historyRepo = historyRepo,
         _languagePrefs = languagePrefs,
-        _recorder = AudioRecorder(),
-        _player = AudioPlayer();
+        _recorder = recorder ?? AudioRecorder(),
+        _player = player ?? AudioPlayer();
 
   final OpenAIClient _apiClient;
   final HistoryRepository _historyRepo;
