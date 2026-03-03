@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -35,6 +36,7 @@ class PhotoViewModel extends ChangeNotifier {
   final LanguagePrefsNotifier _languagePrefs;
   final ImagePicker _picker;
   final AudioPlayer _player = AudioPlayer();
+  StreamSubscription<void>? _playerSubscription;
   bool _isDisposed = false;
 
   // --- State ---
@@ -256,7 +258,8 @@ class PhotoViewModel extends ChangeNotifier {
 
       if (_isDisposed) return;
 
-      _player.onPlayerComplete.listen((_) {
+      _playerSubscription?.cancel();
+      _playerSubscription = _player.onPlayerComplete.listen((_) {
         isSpeaking = false;
         if (!_isDisposed) notifyListeners();
       });
@@ -271,6 +274,7 @@ class PhotoViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _isDisposed = true;
+    _playerSubscription?.cancel();
     _player.dispose();
     // Clean up TTS temp file.
     if (_currentTtsPath != null) {

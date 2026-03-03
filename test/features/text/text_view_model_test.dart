@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lingua_viaje/core/api/openai_client.dart';
 import 'package:lingua_viaje/core/storage/history_repository.dart';
@@ -27,7 +28,33 @@ void main() {
   late MockLanguagePrefsNotifier mockLanguagePrefs;
 
   setUpAll(() {
+    TestWidgetsFlutterBinding.ensureInitialized();
     registerFallbackValue(FakeTranslation());
+
+    // Stub audioplayers platform channels to avoid MissingPluginException.
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('xyz.luan/audioplayers'),
+      (MethodCall methodCall) async => null,
+    );
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('xyz.luan/audioplayers.global'),
+      (MethodCall methodCall) async => null,
+    );
+  });
+
+  tearDownAll(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('xyz.luan/audioplayers'),
+      null,
+    );
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('xyz.luan/audioplayers.global'),
+      null,
+    );
   });
 
   setUp(() {
@@ -39,6 +66,8 @@ void main() {
         .thenReturn(AppLanguage.english);
     when(() => mockLanguagePrefs.targetLanguage)
         .thenReturn(TargetLanguage.spanish);
+    when(() => mockLanguagePrefs.addListener(any())).thenReturn(null);
+    when(() => mockLanguagePrefs.removeListener(any())).thenReturn(null);
   });
 
   TextViewModel createViewModel() {

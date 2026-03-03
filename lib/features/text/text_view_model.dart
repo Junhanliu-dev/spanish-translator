@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
@@ -32,6 +33,7 @@ class TextViewModel extends ChangeNotifier {
   final HistoryRepository _historyRepo;
   final LanguagePrefsNotifier _languagePrefs;
   final AudioPlayer _player = AudioPlayer();
+  StreamSubscription<void>? _playerSubscription;
   bool _isDisposed = false;
 
   // --- State ---
@@ -238,7 +240,8 @@ class TextViewModel extends ChangeNotifier {
 
       if (_isDisposed) return;
 
-      _player.onPlayerComplete.listen((_) {
+      _playerSubscription?.cancel();
+      _playerSubscription = _player.onPlayerComplete.listen((_) {
         isSpeaking = false;
         if (!_isDisposed) notifyListeners();
       });
@@ -254,6 +257,7 @@ class TextViewModel extends ChangeNotifier {
   void dispose() {
     _isDisposed = true;
     _languagePrefs.removeListener(_onLanguageChanged);
+    _playerSubscription?.cancel();
     _player.dispose();
     if (_currentTtsPath != null) {
       try {

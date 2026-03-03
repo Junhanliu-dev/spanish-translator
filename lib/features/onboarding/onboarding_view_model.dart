@@ -72,12 +72,12 @@ class OnboardingViewModel extends ChangeNotifier {
     keyValidationError = null;
     notifyListeners();
 
-    await _secureStorage.setApiKey(key);
     _apiClient.updateApiKey(key);
 
     try {
       final valid = await _apiClient.validateApiKey();
       if (valid) {
+        await _secureStorage.setApiKey(key);
         keyValidated = true;
         apiKeyInput = key;
         isValidatingKey = false;
@@ -86,11 +86,12 @@ class OnboardingViewModel extends ChangeNotifier {
       } else {
         keyValidationError =
             "Key didn't work — check it and try again";
-        await _secureStorage.deleteApiKey();
+        _apiClient.updateApiKey('');
       }
     } catch (_) {
       keyValidationError =
           "Couldn't verify key. Please check your connection.";
+      _apiClient.updateApiKey('');
     }
 
     isValidatingKey = false;
