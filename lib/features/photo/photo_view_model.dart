@@ -1,12 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/api/openai_client.dart';
 import '../../core/error/error_handler.dart';
 import '../../core/storage/history_repository.dart';
+import '../../shared/models/menu_item.dart';
 import '../../shared/models/translation.dart';
 import '../../shared/notifiers/language_prefs_notifier.dart';
 import '../../shared/utils/image_compressor.dart';
@@ -32,6 +34,8 @@ class PhotoViewModel extends ChangeNotifier {
   final HistoryRepository _historyRepo;
   final LanguagePrefsNotifier _languagePrefs;
   final ImagePicker _picker;
+  final AudioPlayer _player = AudioPlayer();
+  bool _isDisposed = false;
 
   // --- State ---
   PhotoState state = PhotoState.idle;
@@ -42,6 +46,8 @@ class PhotoViewModel extends ChangeNotifier {
   List<String> pageImagePaths = [];
   bool isSaved = false;
   int? _lastSavedId;
+  bool isSpeaking = false;
+  String? _currentTtsPath;
 
   /// Capture a photo from the device camera.
   Future<String?> capturePhoto() async {
@@ -119,9 +125,11 @@ class PhotoViewModel extends ChangeNotifier {
       final base64Image = base64Encode(bytes);
 
       // Send to GPT-4o Vision.
+      // Menu is in the target language (e.g. Spanish); translate to source
+      // language (e.g. English) so the traveler can understand it.
       menuResult = await _apiClient.translateImage(
         base64Image: base64Image,
-        targetLanguage: _languagePrefs.targetLanguage.code,
+        targetLanguage: _languagePrefs.sourceLanguage.code,
       );
 
       capturedImagePath = imagePath;
@@ -154,12 +162,12 @@ class PhotoViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Save the menu translation to history.
-  Future<void> saveToHistory() async {
+  /// Save the menu translation to history with a user-provided title.
+  Future<void> saveToHistory({required String title}) async {
     if (menuResult == null || capturedImagePath == null) return;
     if (isSaved) return;
 
-    // Build summary text from menu items.
+    // Build full text from all menu items (no truncation).
     final allItems = menuResult!.sections
         .expand((s) => s.items)
         .toList();
@@ -172,12 +180,9 @@ class PhotoViewModel extends ChangeNotifier {
 
     final translation = Translation(
       type: 'photo',
-      sourceText: sourceText.length > 200
-          ? '${sourceText.substring(0, 200)}...'
-          : sourceText,
-      translatedText: translatedText.length > 500
-          ? '${translatedText.substring(0, 500)}...'
-          : translatedText,
+      title: title.trim().isEmpty ? null : title.trim(),
+      sourceText: sourceText,
+      translatedText: translatedText,
       sourceLanguage: menuResult!.detectedLanguage,
       targetLanguage: _languagePrefs.targetLanguage.code,
       imagePath: capturedImagePath,
@@ -186,9 +191,24 @@ class PhotoViewModel extends ChangeNotifier {
 
     _lastSavedId = await _historyRepo.insertTranslation(translation);
 
-    // Save individual menu items.
+    // Save individual menu items with sort order.
     if (_lastSavedId != null) {
-      await _historyRepo.insertMenuItems(_lastSavedId!, allItems);
+      var sortOrder = 0;
+      final itemsWithOrder = <MenuItem>[];
+      for (final section in menuResult!.sections) {
+        for (final item in section.items) {
+          itemsWithOrder.add(MenuItem(
+            originalName: item.originalName,
+            translatedName: item.translatedName,
+            description: item.description,
+            pronunciation: item.pronunciation,
+            price: item.price,
+            category: section.originalTitle,
+            sortOrder: sortOrder++,
+          ));
+        }
+      }
+      await _historyRepo.insertMenuItems(_lastSavedId!, itemsWithOrder);
     }
 
     isSaved = true;
@@ -214,5 +234,50 @@ class PhotoViewModel extends ChangeNotifier {
       0,
       (sum, section) => sum + section.items.length,
     );
+  }
+
+  /// Speak the original name of a menu item via TTS.
+  Future<void> speakText(String text) async {
+    try {
+      isSpeaking = true;
+      notifyListeners();
+
+      // Clean up previous TTS file.
+      if (_currentTtsPath != null) {
+        try {
+          await File(_currentTtsPath!).delete();
+        } catch (_) {}
+      }
+
+      _currentTtsPath = await _apiClient.textToSpeech(
+        text: text,
+        speed: 0.85,
+      );
+
+      if (_isDisposed) return;
+
+      _player.onPlayerComplete.listen((_) {
+        isSpeaking = false;
+        if (!_isDisposed) notifyListeners();
+      });
+
+      await _player.play(DeviceFileSource(_currentTtsPath!));
+    } catch (_) {
+      isSpeaking = false;
+      if (!_isDisposed) notifyListeners();
+    }
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    _player.dispose();
+    // Clean up TTS temp file.
+    if (_currentTtsPath != null) {
+      try {
+        File(_currentTtsPath!).delete();
+      } catch (_) {}
+    }
+    super.dispose();
   }
 }

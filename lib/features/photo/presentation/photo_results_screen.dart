@@ -54,19 +54,64 @@ class _PhotoResultsScreenState extends State<PhotoResultsScreen>
     super.dispose();
   }
 
-  void _showSavedSnackBar() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.check_circle, color: Color(0xFF81C784), size: 20),
-            SizedBox(width: 8),
-            Text('Saved to History'),
+  Future<void> _showSaveTitleDialog() async {
+    final controller = TextEditingController();
+    final title = await showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Save Menu'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(
+              hintText: 'e.g. Bar Txepetxa, Calle Mayor...',
+              labelText: 'Title',
+            ),
+            onSubmitted: (value) => Navigator.pop(ctx, value),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, controller.text),
+              child: const Text('Save'),
+            ),
           ],
-        ),
-        duration: Duration(seconds: 2),
-      ),
+        );
+      },
     );
+
+    if (title == null || !mounted) return;
+
+    await _viewModel.saveToHistory(title: title);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(
+                Icons.check_circle,
+                color: Color(0xFF81C784),
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title.trim().isEmpty
+                      ? 'Saved to History'
+                      : 'Saved "${title.trim()}" to History',
+                ),
+              ),
+            ],
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   @override
@@ -92,10 +137,7 @@ class _PhotoResultsScreenState extends State<PhotoResultsScreen>
                 IconButton(
                   onPressed: _viewModel.isSaved
                       ? null
-                      : () async {
-                          await _viewModel.saveToHistory();
-                          if (mounted) _showSavedSnackBar();
-                        },
+                      : _showSaveTitleDialog,
                   icon: Icon(
                     _viewModel.isSaved
                         ? Icons.bookmark
@@ -283,6 +325,8 @@ class _PhotoResultsScreenState extends State<PhotoResultsScreen>
             item: item,
             isExpanded: _viewModel.expandedItemIndex == itemIndex,
             onTap: () => _viewModel.toggleItemExpansion(itemIndex),
+            isSpeaking: _viewModel.isSpeaking,
+            onSpeak: () => _viewModel.speakText(item.originalName),
           )
               .animate()
               .fadeIn(

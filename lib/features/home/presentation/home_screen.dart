@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../core/router/route_names.dart';
@@ -55,8 +56,68 @@ class _HomeScreenState extends State<HomeScreen> {
       _showNoApiKeySheet();
       return;
     }
-    if (!await _ensurePermission(Permission.camera, 'Camera')) return;
-    if (mounted) context.push(RoutePaths.photo);
+
+    // Let the user choose camera or gallery, then go straight to results.
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.stone300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Translate a Menu',
+                  style: Theme.of(ctx).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 16),
+                ListTile(
+                  leading: const Icon(Icons.camera_alt),
+                  title: const Text('Take a Photo'),
+                  onTap: () => Navigator.pop(ctx, ImageSource.camera),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_library),
+                  title: const Text('Choose from Gallery'),
+                  onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (source == null || !mounted) return;
+
+    if (source == ImageSource.camera) {
+      if (!await _ensurePermission(Permission.camera, 'Camera')) return;
+    }
+
+    final picker = ImagePicker();
+    final image = await picker.pickImage(
+      source: source,
+      imageQuality: 90,
+      maxWidth: 2048,
+    );
+
+    if (image != null && mounted) {
+      context.push('/photo/results', extra: image.path);
+    }
   }
 
   void _onTextTap() {
@@ -187,14 +248,19 @@ class _HomeScreenState extends State<HomeScreen> {
           appBar: AppBar(
             title: const Text('LinguaViaje'),
             actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: LanguageTogglePill(
-                  selected: ServiceLocator.languagePrefs.targetLanguage,
-                  onChanged: (lang) {
-                    ServiceLocator.languagePrefs.targetLanguage = lang;
-                  },
-                ),
+              ListenableBuilder(
+                listenable: ServiceLocator.languagePrefs,
+                builder: (context, _) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: LanguageTogglePill(
+                      selected: ServiceLocator.languagePrefs.targetLanguage,
+                      onChanged: (lang) {
+                        ServiceLocator.languagePrefs.targetLanguage = lang;
+                      },
+                    ),
+                  );
+                },
               ),
               ValueListenableBuilder<bool>(
                 valueListenable:

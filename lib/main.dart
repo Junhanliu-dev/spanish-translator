@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'app.dart';
 import 'core/api/openai_client.dart';
@@ -14,6 +15,9 @@ import 'shared/notifiers/theme_notifier.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Load .env for bundled configuration.
+  await dotenv.load(fileName: '.env');
+
   // Initialize core services.
   final secureStorage = SecureStorageService();
   final settingsService = SettingsService();
@@ -23,8 +27,15 @@ Future<void> main() async {
   final connectivityService = ConnectivityService();
   await connectivityService.init();
 
-  // Create OpenAI client (may have no key yet).
-  final apiKey = await secureStorage.getApiKey();
+  // Seed API key from .env if not already stored.
+  var apiKey = await secureStorage.getApiKey();
+  if (apiKey == null || apiKey.isEmpty) {
+    final envKey = dotenv.env['OPENAI_API_KEY'];
+    if (envKey != null && envKey.isNotEmpty) {
+      await secureStorage.setApiKey(envKey);
+      apiKey = envKey;
+    }
+  }
   final apiClient = OpenAIClient(apiKey: apiKey ?? '');
 
   // Create global notifiers.

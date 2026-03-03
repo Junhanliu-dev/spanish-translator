@@ -35,6 +35,7 @@ class _PermissionsScreenState extends State<PermissionsScreen> {
     final camStatus = await Permission.camera.status;
     _viewModel.micPermissionGranted = micStatus.isGranted;
     _viewModel.cameraPermissionGranted = camStatus.isGranted;
+    if (mounted) setState(() {});
   }
 
   @override

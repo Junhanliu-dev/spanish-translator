@@ -6,6 +6,7 @@ class Translation {
   final String translatedText;
   final String sourceLanguage; // 'en' | 'zh' | 'es' | 'eu'
   final String targetLanguage;
+  final String? title; // user-provided title (e.g. for saved menus)
   final String? context; // contextual explanation
   final String? pronunciation; // pronunciation guide
   final String? imagePath; // local path for photo translations
@@ -19,6 +20,7 @@ class Translation {
     required this.translatedText,
     required this.sourceLanguage,
     required this.targetLanguage,
+    this.title,
     this.context,
     this.pronunciation,
     this.imagePath,
@@ -35,6 +37,7 @@ class Translation {
       translatedText: map['translated_text'] as String,
       sourceLanguage: map['source_language'] as String,
       targetLanguage: map['target_language'] as String,
+      title: map['title'] as String?,
       context: map['context'] as String?,
       pronunciation: map['pronunciation'] as String?,
       imagePath: map['image_path'] as String?,
@@ -52,6 +55,7 @@ class Translation {
       'translated_text': translatedText,
       'source_language': sourceLanguage,
       'target_language': targetLanguage,
+      'title': title,
       'context': context,
       'pronunciation': pronunciation,
       'image_path': imagePath,
@@ -68,6 +72,7 @@ class Translation {
     String? translatedText,
     String? sourceLanguage,
     String? targetLanguage,
+    String? title,
     String? context,
     String? pronunciation,
     String? imagePath,
@@ -81,6 +86,7 @@ class Translation {
       translatedText: translatedText ?? this.translatedText,
       sourceLanguage: sourceLanguage ?? this.sourceLanguage,
       targetLanguage: targetLanguage ?? this.targetLanguage,
+      title: title ?? this.title,
       context: context ?? this.context,
       pronunciation: pronunciation ?? this.pronunciation,
       imagePath: imagePath ?? this.imagePath,

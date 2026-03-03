@@ -230,6 +230,10 @@ class _TextTranslationScreenState extends State<TextTranslationScreen>
                         pronunciationExpanded:
                             _viewModel.pronunciationExpanded,
                         isFavorite: _viewModel.isFavorite,
+                        isSpeaking: _viewModel.isSpeaking,
+                        onSpeak: () => _viewModel.speakText(
+                          _viewModel.result!.translatedText,
+                        ),
                         onToggleContext: _viewModel.toggleContext,
                         onTogglePronunciation:
                             _viewModel.togglePronunciation,
@@ -320,7 +324,7 @@ class _TextTranslationScreenState extends State<TextTranslationScreen>
       decoration: InputDecoration(
         hintText: _viewModel.isReversed
             ? 'Type or paste ${_viewModel.sourceLanguageDisplay} text...'
-            : 'Type or paste Spanish or Basque text here...',
+            : 'Type or paste ${_viewModel.targetLanguageDisplay} text here...',
         counterText: _viewModel.inputText.length > 500
             ? '${_viewModel.inputText.length} characters'
             : '',

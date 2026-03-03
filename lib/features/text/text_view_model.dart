@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../core/api/openai_client.dart';
@@ -21,11 +24,15 @@ class TextViewModel extends ChangeNotifier {
     required LanguagePrefsNotifier languagePrefs,
   })  : _apiClient = apiClient,
         _historyRepo = historyRepo,
-        _languagePrefs = languagePrefs;
+        _languagePrefs = languagePrefs {
+    _languagePrefs.addListener(_onLanguageChanged);
+  }
 
   final OpenAIClient _apiClient;
   final HistoryRepository _historyRepo;
   final LanguagePrefsNotifier _languagePrefs;
+  final AudioPlayer _player = AudioPlayer();
+  bool _isDisposed = false;
 
   // --- State ---
   TextTranslationState state = TextTranslationState.idle;
@@ -39,6 +46,8 @@ class TextViewModel extends ChangeNotifier {
   bool isFavorite = false;
   int? _lastSavedId;
   List<Translation> recentTranslations = [];
+  bool isSpeaking = false;
+  String? _currentTtsPath;
 
   /// Translate the current input text.
   Future<void> translate() async {
@@ -203,5 +212,54 @@ class TextViewModel extends ChangeNotifier {
       return _languagePrefs.sourceLanguage.displayName;
     }
     return _languagePrefs.targetLanguage.displayName;
+  }
+
+  /// Forward language pref changes to rebuild the direction toggle.
+  void _onLanguageChanged() {
+    if (!_isDisposed) notifyListeners();
+  }
+
+  /// Speak text via OpenAI TTS.
+  Future<void> speakText(String text) async {
+    try {
+      isSpeaking = true;
+      notifyListeners();
+
+      if (_currentTtsPath != null) {
+        try {
+          await File(_currentTtsPath!).delete();
+        } catch (_) {}
+      }
+
+      _currentTtsPath = await _apiClient.textToSpeech(
+        text: text,
+        speed: 0.85,
+      );
+
+      if (_isDisposed) return;
+
+      _player.onPlayerComplete.listen((_) {
+        isSpeaking = false;
+        if (!_isDisposed) notifyListeners();
+      });
+
+      await _player.play(DeviceFileSource(_currentTtsPath!));
+    } catch (_) {
+      isSpeaking = false;
+      if (!_isDisposed) notifyListeners();
+    }
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    _languagePrefs.removeListener(_onLanguageChanged);
+    _player.dispose();
+    if (_currentTtsPath != null) {
+      try {
+        File(_currentTtsPath!).delete();
+      } catch (_) {}
+    }
+    super.dispose();
   }
 }

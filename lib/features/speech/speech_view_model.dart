@@ -29,7 +29,9 @@ class SpeechViewModel extends ChangeNotifier {
         _historyRepo = historyRepo,
         _languagePrefs = languagePrefs,
         _recorder = recorder ?? AudioRecorder(),
-        _player = player ?? AudioPlayer();
+        _player = player ?? AudioPlayer() {
+    _languagePrefs.addListener(_onLanguageChanged);
+  }
 
   final OpenAIClient _apiClient;
   final HistoryRepository _historyRepo;
@@ -276,6 +278,11 @@ class SpeechViewModel extends ChangeNotifier {
     };
   }
 
+  /// Forward language pref changes to rebuild the direction indicator.
+  void _onLanguageChanged() {
+    _safeNotify();
+  }
+
   void _safeNotify() {
     if (!_isDisposed) notifyListeners();
   }
@@ -283,6 +290,7 @@ class SpeechViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _isDisposed = true;
+    _languagePrefs.removeListener(_onLanguageChanged);
     _playerSubscription?.cancel();
     _recorder.dispose();
     _player.dispose();

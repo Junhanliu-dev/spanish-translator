@@ -20,6 +20,8 @@ class WelcomeScreen extends StatefulWidget {
 class _WelcomeScreenState extends State<WelcomeScreen> {
   late final OnboardingViewModel _viewModel;
 
+  bool _hasApiKey = false;
+
   @override
   void initState() {
     super.initState();
@@ -28,6 +30,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       settingsService: ServiceLocator.settingsService,
       apiClient: ServiceLocator.apiClient,
     );
+    _checkExistingKey();
+  }
+
+  Future<void> _checkExistingKey() async {
+    final hasKey = await ServiceLocator.secureStorage.hasApiKey();
+    if (mounted) setState(() => _hasApiKey = hasKey);
   }
 
   @override
@@ -135,8 +143,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () =>
-                          context.go(RoutePaths.onboardingApiKey),
+                      onPressed: () => context.go(
+                        _hasApiKey
+                            ? RoutePaths.onboardingLanguagePrefs
+                            : RoutePaths.onboardingApiKey,
+                      ),
                       child: const Text('Get Started'),
                     ),
                   ),

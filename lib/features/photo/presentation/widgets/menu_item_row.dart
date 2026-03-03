@@ -15,6 +15,8 @@ class MenuItemRow extends StatelessWidget {
     required this.item,
     required this.isExpanded,
     required this.onTap,
+    this.onSpeak,
+    this.isSpeaking = false,
   });
 
   /// The menu item data.
@@ -25,6 +27,12 @@ class MenuItemRow extends StatelessWidget {
 
   /// Called when the user taps to expand/collapse.
   final VoidCallback onTap;
+
+  /// Called when the user taps the speaker icon to hear pronunciation.
+  final VoidCallback? onSpeak;
+
+  /// Whether TTS is currently playing.
+  final bool isSpeaking;
 
   @override
   Widget build(BuildContext context) {
@@ -102,7 +110,11 @@ class MenuItemRow extends StatelessWidget {
               curve: Curves.easeInOut,
               alignment: Alignment.topCenter,
               child: isExpanded
-                  ? _ExpandedContent(item: item)
+                  ? _ExpandedContent(
+                      item: item,
+                      onSpeak: onSpeak,
+                      isSpeaking: isSpeaking,
+                    )
                   : const SizedBox.shrink(),
             ),
           ],
@@ -113,9 +125,15 @@ class MenuItemRow extends StatelessWidget {
 }
 
 class _ExpandedContent extends StatelessWidget {
-  const _ExpandedContent({required this.item});
+  const _ExpandedContent({
+    required this.item,
+    this.onSpeak,
+    this.isSpeaking = false,
+  });
 
   final MenuItem item;
+  final VoidCallback? onSpeak;
+  final bool isSpeaking;
 
   @override
   Widget build(BuildContext context) {
@@ -149,14 +167,38 @@ class _ExpandedContent extends StatelessWidget {
         ],
         if (item.pronunciation != null &&
             item.pronunciation!.isNotEmpty) ...[
-          Text(
-            'Pronunciation:',
-            style: GoogleFonts.dmSans(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: AppColors.stone500,
-              letterSpacing: 0.5,
-            ),
+          Row(
+            children: [
+              Text(
+                'Pronunciation:',
+                style: GoogleFonts.dmSans(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.stone500,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const Spacer(),
+              if (onSpeak != null)
+                SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: IconButton(
+                    onPressed: isSpeaking ? null : onSpeak,
+                    padding: EdgeInsets.zero,
+                    icon: Icon(
+                      isSpeaking
+                          ? Icons.volume_up
+                          : Icons.volume_up_outlined,
+                      size: 20,
+                      color: isSpeaking
+                          ? AppColors.terracotta
+                          : AppColors.stone500,
+                    ),
+                    tooltip: 'Listen to pronunciation',
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 4),
           Text(

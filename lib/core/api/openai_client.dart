@@ -57,8 +57,8 @@ class OpenAIClient {
       : _dio = Dio(
           BaseOptions(
             baseUrl: 'https://api.openai.com/v1',
-            connectTimeout: const Duration(seconds: 10),
-            receiveTimeout: const Duration(seconds: 15),
+            connectTimeout: const Duration(seconds: 15),
+            receiveTimeout: const Duration(seconds: 60),
             headers: {
               'Authorization': 'Bearer $apiKey',
             },
@@ -184,6 +184,14 @@ Respond ONLY with a JSON object:
     required String targetLanguage,
   }) async {
     _requireApiKey();
+    // Map code to full name for the prompt.
+    final targetName = switch (targetLanguage) {
+      'en' => 'English',
+      'zh' => 'Mandarin Chinese',
+      'es' => 'Spanish',
+      'eu' => 'Basque',
+      _ => targetLanguage,
+    };
     final systemPrompt = '''
 You are a specialist in translating Spanish and Basque restaurant menus for
 travelers. Analyze the following menu image.
@@ -191,7 +199,7 @@ travelers. Analyze the following menu image.
 Instructions:
 1. Extract ALL text from the menu image, preserving the structure (sections,
    items, prices)
-2. Translate each item to $targetLanguage
+2. Translate each item to $targetName
 3. For each item, provide:
    - The original name exactly as written
    - A clear translation
@@ -235,6 +243,10 @@ Respond ONLY with a JSON object:
             {
               'role': 'user',
               'content': [
+                {
+                  'type': 'text',
+                  'text': 'Please translate this restaurant menu.',
+                },
                 {
                   'type': 'image_url',
                   'image_url': {

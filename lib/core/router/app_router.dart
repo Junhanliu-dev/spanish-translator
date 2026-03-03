@@ -21,11 +21,17 @@ import 'route_names.dart';
 GoRouter createRouter({
   required bool onboardingComplete,
 }) {
+  var onboardingDone = onboardingComplete;
+
   return GoRouter(
     initialLocation:
-        onboardingComplete ? RoutePaths.home : RoutePaths.onboardingWelcome,
+        onboardingDone ? RoutePaths.home : RoutePaths.onboardingWelcome,
     redirect: (context, state) {
-      if (!onboardingComplete &&
+      // Once the user navigates to /home, onboarding is done for this session.
+      if (state.matchedLocation == RoutePaths.home) {
+        onboardingDone = true;
+      }
+      if (!onboardingDone &&
           !state.matchedLocation.startsWith('/onboarding')) {
         return RoutePaths.onboardingWelcome;
       }

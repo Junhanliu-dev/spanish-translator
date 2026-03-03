@@ -24,6 +24,8 @@ class TranslationResultCard extends StatelessWidget {
     this.onCopyTranslation,
     this.onCopyAll,
     this.onToggleFavorite,
+    this.onSpeak,
+    this.isSpeaking = false,
   });
 
   /// The translation response data.
@@ -58,6 +60,12 @@ class TranslationResultCard extends StatelessWidget {
 
   /// Called to toggle bookmark.
   final VoidCallback? onToggleFavorite;
+
+  /// Called to speak the translated text via TTS.
+  final VoidCallback? onSpeak;
+
+  /// Whether TTS is currently playing.
+  final bool isSpeaking;
 
   @override
   Widget build(BuildContext context) {
@@ -159,15 +167,38 @@ class TranslationResultCard extends StatelessWidget {
                   ],
                 ),
               ),
-              IconButton(
-                onPressed: onCopyTranslation,
-                icon: const Icon(Icons.content_copy, size: 20),
-                color: AppColors.terracotta,
-                constraints: const BoxConstraints(
-                  minWidth: 48,
-                  minHeight: 48,
-                ),
-                tooltip: 'Copy translation',
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (onSpeak != null)
+                    IconButton(
+                      onPressed: isSpeaking ? null : onSpeak,
+                      icon: Icon(
+                        isSpeaking
+                            ? Icons.volume_up
+                            : Icons.volume_up_outlined,
+                        size: 20,
+                      ),
+                      color: isSpeaking
+                          ? AppColors.terracotta
+                          : AppColors.stone500,
+                      constraints: const BoxConstraints(
+                        minWidth: 40,
+                        minHeight: 40,
+                      ),
+                      tooltip: 'Listen',
+                    ),
+                  IconButton(
+                    onPressed: onCopyTranslation,
+                    icon: const Icon(Icons.content_copy, size: 20),
+                    color: AppColors.terracotta,
+                    constraints: const BoxConstraints(
+                      minWidth: 40,
+                      minHeight: 40,
+                    ),
+                    tooltip: 'Copy translation',
+                  ),
+                ],
               ),
             ],
           ),

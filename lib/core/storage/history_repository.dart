@@ -15,11 +15,12 @@ class HistoryRepository {
     final dbPath = await getDatabasesPath();
     _db = await openDatabase(
       p.join(dbPath, 'linguaviaje.db'),
-      version: 1,
+      version: 2,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
       onCreate: _createTables,
+      onUpgrade: _upgradeTables,
     );
   }
 
@@ -32,6 +33,7 @@ class HistoryRepository {
         translated_text TEXT NOT NULL,
         source_language TEXT NOT NULL,
         target_language TEXT NOT NULL,
+        title TEXT,
         context TEXT,
         pronunciation TEXT,
         image_path TEXT,
@@ -67,6 +69,12 @@ class HistoryRepository {
       'CREATE INDEX idx_translations_favorite '
       'ON translations(is_favorite)',
     );
+  }
+
+  Future<void> _upgradeTables(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('ALTER TABLE translations ADD COLUMN title TEXT');
+    }
   }
 
   /// Insert a translation. Enforces 500-entry limit by pruning.
