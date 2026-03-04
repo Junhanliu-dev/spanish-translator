@@ -37,6 +37,25 @@ class MenuSection {
   });
 }
 
+/// Structured response from the landmark/artwork lookup endpoint.
+class LandmarkDescription {
+  final String title;
+  final String type;
+  final String? artist;
+  final String? year;
+  final String description;
+  final List<String> funFacts;
+
+  const LandmarkDescription({
+    required this.title,
+    required this.type,
+    this.artist,
+    this.year,
+    required this.description,
+    required this.funFacts,
+  });
+}
+
 /// Structured response from the menu/image translation endpoint.
 class MenuTranslationResponse {
   final List<MenuSection> sections;
@@ -301,6 +320,117 @@ Respond ONLY with a JSON object:
         sections: sections,
         detectedLanguage: detectedLanguage,
       );
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    }
+  }
+
+  /// Look up an artwork, sculpture, or landmark using GPT-4o.
+  Future<LandmarkDescription> describeLandmark({
+    required String name,
+    String? location,
+  }) async {
+    _requireApiKey();
+    final locationHint =
+        location != null ? ' The user believes it is located in $location.' : '';
+    final systemPrompt = '''
+You are a knowledgeable art and culture guide specializing in Spain and Basque Country.
+Given the name of an artwork, sculpture, building, or landmark, provide a rich description.$locationHint
+
+Respond ONLY with a JSON object:
+{
+  "title": "official/common name",
+  "type": "painting|sculpture|building|landmark|museum|other",
+  "artist": "creator if applicable, or null",
+  "year": "year or date range if known, or null",
+  "description": "2-3 paragraph rich description with history and significance",
+  "fun_facts": ["fact 1", "fact 2", "fact 3"]
+}''';
+
+    try {
+      final response = await _dio.post(
+        OpenAIEndpoints.chatCompletions,
+        data: {
+          'model': OpenAIModels.gpt4o,
+          'messages': [
+            {'role': 'system', 'content': systemPrompt},
+            {'role': 'user', 'content': name},
+          ],
+          'temperature': 0.4,
+          'response_format': {'type': 'json_object'},
+        },
+      );
+
+      final data = response.data as Map<String, dynamic>;
+      final content = data['choices'][0]['message']['content'] as String;
+      final parsed = json.decode(content) as Map<String, dynamic>;
+
+      final factsJson = parsed['fun_facts'] as List<dynamic>? ?? [];
+
+      return LandmarkDescription(
+        title: parsed['title'] as String? ?? name,
+        type: parsed['type'] as String? ?? 'other',
+        artist: parsed['artist'] as String?,
+        year: parsed['year'] as String?,
+        description: parsed['description'] as String? ?? '',
+        funFacts: factsJson.map((f) => f as String).toList(),
+      );
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    }
+  }
+
+  /// Generate a polite restaurant ordering phrase in the target language.
+  ///
+  /// Takes a list of (itemName, quantity) pairs and the restaurant language
+  /// code ('es' for Spanish, 'eu' for Basque). Returns a natural spoken
+  /// phrase the user can say to the waiter.
+  Future<String> generateOrderPhrase({
+    required List<(String name, int quantity)> items,
+    required String restaurantLanguage,
+  }) async {
+    _requireApiKey();
+
+    final langName = switch (restaurantLanguage) {
+      'es' => 'Spanish',
+      'eu' => 'Basque (Euskara)',
+      'es+eu' => 'Spanish',
+      _ => 'Spanish',
+    };
+
+    final itemList = items
+        .map((e) => '${e.$2}x ${e.$1}')
+        .join(', ');
+
+    final systemPrompt = '''
+You are helping a tourist order food at a restaurant in $langName.
+Given a list of items and quantities, produce a single polite ordering phrase
+in $langName that the tourist can say to the waiter.
+
+Guidelines:
+- Be natural and polite (use "por favor", greet if appropriate)
+- Use correct grammar and number agreement
+- For Basque: use natural Euskara phrasing, not a literal translation from Spanish
+- Return ONLY the phrase as plain text, no quotes, no explanation''';
+
+    try {
+      final response = await _dio.post(
+        OpenAIEndpoints.chatCompletions,
+        data: {
+          'model': OpenAIModels.gpt4o,
+          'messages': [
+            {'role': 'system', 'content': systemPrompt},
+            {'role': 'user', 'content': 'I want to order: $itemList'},
+          ],
+          'temperature': 0.3,
+          'max_tokens': 256,
+        },
+      );
+
+      final data = response.data as Map<String, dynamic>;
+      final content =
+          data['choices'][0]['message']['content'] as String;
+      return content.trim();
     } on DioException catch (e) {
       throw _mapDioException(e);
     }

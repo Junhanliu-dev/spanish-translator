@@ -347,6 +347,289 @@ void main() {
       });
     });
 
+    group('order state', () {
+      PhotoViewModel createVmWithMenu() {
+        final vm = createViewModel();
+        vm.menuResult = MenuTranslationResponse(
+          detectedLanguage: 'es',
+          sections: [
+            MenuSection(
+              originalTitle: 'Entrantes',
+              translatedTitle: 'Starters',
+              items: [
+                const MenuItem(
+                  originalName: 'Gazpacho',
+                  translatedName: 'Cold tomato soup',
+                  price: 'EUR 8.00',
+                ),
+                const MenuItem(
+                  originalName: 'Tortilla',
+                  translatedName: 'Spanish omelette',
+                  price: 'EUR 10.00',
+                ),
+              ],
+            ),
+            MenuSection(
+              originalTitle: 'Principales',
+              translatedTitle: 'Mains',
+              items: [
+                const MenuItem(
+                  originalName: 'Paella',
+                  translatedName: 'Seafood rice',
+                  price: 'EUR 16.00',
+                ),
+              ],
+            ),
+          ],
+        );
+        return vm;
+      }
+
+      test('initial order state is empty', () {
+        final vm = createViewModel();
+        expect(vm.orderItems, isEmpty);
+        expect(vm.orderPhrase, isNull);
+        expect(vm.isGeneratingOrder, isFalse);
+        expect(vm.isSpeakingOrder, isFalse);
+        expect(vm.hasOrder, isFalse);
+        expect(vm.orderTotalCount, 0);
+      });
+
+      group('addToOrder()', () {
+        test('adds item with quantity 1', () {
+          final vm = createVmWithMenu();
+          vm.addToOrder(0);
+          expect(vm.orderItems[0], 1);
+          expect(vm.hasOrder, isTrue);
+          expect(vm.orderTotalCount, 1);
+        });
+
+        test('increments quantity on repeated adds', () {
+          final vm = createVmWithMenu();
+          vm.addToOrder(0);
+          vm.addToOrder(0);
+          vm.addToOrder(0);
+          expect(vm.orderItems[0], 3);
+          expect(vm.orderTotalCount, 3);
+        });
+
+        test('tracks multiple items independently', () {
+          final vm = createVmWithMenu();
+          vm.addToOrder(0);
+          vm.addToOrder(1);
+          vm.addToOrder(1);
+          expect(vm.orderItems[0], 1);
+          expect(vm.orderItems[1], 2);
+          expect(vm.orderTotalCount, 3);
+        });
+
+        test('nulls orderPhrase on change', () {
+          final vm = createVmWithMenu();
+          vm.orderPhrase = 'Cached phrase';
+          vm.addToOrder(0);
+          expect(vm.orderPhrase, isNull);
+        });
+
+        test('notifies listeners', () {
+          final vm = createVmWithMenu();
+          var notified = false;
+          vm.addListener(() => notified = true);
+          vm.addToOrder(0);
+          expect(notified, isTrue);
+        });
+      });
+
+      group('removeFromOrder()', () {
+        test('decrements quantity', () {
+          final vm = createVmWithMenu();
+          vm.addToOrder(0);
+          vm.addToOrder(0);
+          vm.removeFromOrder(0);
+          expect(vm.orderItems[0], 1);
+        });
+
+        test('removes item entirely when quantity reaches 0', () {
+          final vm = createVmWithMenu();
+          vm.addToOrder(0);
+          vm.removeFromOrder(0);
+          expect(vm.orderItems.containsKey(0), isFalse);
+          expect(vm.hasOrder, isFalse);
+        });
+
+        test('nulls orderPhrase on change', () {
+          final vm = createVmWithMenu();
+          vm.addToOrder(0);
+          vm.orderPhrase = 'Cached phrase';
+          vm.removeFromOrder(0);
+          expect(vm.orderPhrase, isNull);
+        });
+
+        test('handles removing non-existent item gracefully', () {
+          final vm = createVmWithMenu();
+          vm.removeFromOrder(99);
+          expect(vm.orderItems, isEmpty);
+        });
+      });
+
+      group('clearOrder()', () {
+        test('clears all items and phrase', () {
+          final vm = createVmWithMenu();
+          vm.addToOrder(0);
+          vm.addToOrder(1);
+          vm.orderPhrase = 'Some phrase';
+
+          vm.clearOrder();
+
+          expect(vm.orderItems, isEmpty);
+          expect(vm.orderPhrase, isNull);
+          expect(vm.hasOrder, isFalse);
+          expect(vm.orderTotalCount, 0);
+        });
+      });
+
+      group('orderItemList', () {
+        test('returns empty list when no order', () {
+          final vm = createVmWithMenu();
+          expect(vm.orderItemList, isEmpty);
+        });
+
+        test('returns items sorted by index', () {
+          final vm = createVmWithMenu();
+          vm.addToOrder(2); // Paella (index 2)
+          vm.addToOrder(0); // Gazpacho (index 0)
+
+          final list = vm.orderItemList;
+          expect(list.length, 2);
+          expect(list[0].$1, 0); // Gazpacho first
+          expect(list[0].$2.originalName, 'Gazpacho');
+          expect(list[0].$3, 1);
+          expect(list[1].$1, 2); // Paella second
+          expect(list[1].$2.originalName, 'Paella');
+          expect(list[1].$3, 1);
+        });
+
+        test('reflects correct quantities', () {
+          final vm = createVmWithMenu();
+          vm.addToOrder(1);
+          vm.addToOrder(1);
+          vm.addToOrder(1);
+
+          final list = vm.orderItemList;
+          expect(list.length, 1);
+          expect(list[0].$2.originalName, 'Tortilla');
+          expect(list[0].$3, 3);
+        });
+      });
+
+      group('generateOrderPhrase()', () {
+        test('does nothing when order is empty', () async {
+          final vm = createVmWithMenu();
+          await vm.generateOrderPhrase();
+          expect(vm.orderPhrase, isNull);
+          verifyNever(() => mockApiClient.generateOrderPhrase(
+                items: any(named: 'items'),
+                restaurantLanguage: any(named: 'restaurantLanguage'),
+              ));
+        });
+
+        test('calls API and caches result', () async {
+          when(() => mockApiClient.generateOrderPhrase(
+                items: any(named: 'items'),
+                restaurantLanguage: any(named: 'restaurantLanguage'),
+              )).thenAnswer((_) async =>
+              'Hola, querría un gazpacho, por favor.');
+
+          final vm = createVmWithMenu();
+          vm.addToOrder(0);
+
+          await vm.generateOrderPhrase();
+
+          expect(vm.orderPhrase,
+              'Hola, querría un gazpacho, por favor.');
+          expect(vm.isGeneratingOrder, isFalse);
+        });
+
+        test('sets isGeneratingOrder during API call', () async {
+          when(() => mockApiClient.generateOrderPhrase(
+                items: any(named: 'items'),
+                restaurantLanguage: any(named: 'restaurantLanguage'),
+              )).thenAnswer((_) async => 'phrase');
+
+          final vm = createVmWithMenu();
+          vm.addToOrder(0);
+
+          final generatingStates = <bool>[];
+          vm.addListener(
+              () => generatingStates.add(vm.isGeneratingOrder));
+
+          await vm.generateOrderPhrase();
+
+          expect(generatingStates, contains(true));
+          expect(generatingStates.last, isFalse);
+        });
+
+        test('handles API error gracefully', () async {
+          when(() => mockApiClient.generateOrderPhrase(
+                items: any(named: 'items'),
+                restaurantLanguage: any(named: 'restaurantLanguage'),
+              )).thenThrow(Exception('API error'));
+
+          final vm = createVmWithMenu();
+          vm.addToOrder(0);
+
+          await vm.generateOrderPhrase();
+
+          expect(vm.orderPhrase, isNull);
+          expect(vm.isGeneratingOrder, isFalse);
+        });
+      });
+
+      group('speakOrder()', () {
+        test('does nothing when orderPhrase is null', () async {
+          final vm = createVmWithMenu();
+          await vm.speakOrder();
+          expect(vm.isSpeakingOrder, isFalse);
+          verifyNever(() => mockApiClient.textToSpeech(
+                text: any(named: 'text'),
+                speed: any(named: 'speed'),
+              ));
+        });
+
+        test('sets isSpeakingOrder to true then false on error',
+            () async {
+          when(() => mockApiClient.textToSpeech(
+                text: any(named: 'text'),
+                speed: any(named: 'speed'),
+              )).thenThrow(Exception('TTS failed'));
+
+          final vm = createVmWithMenu();
+          vm.orderPhrase = 'Un gazpacho, por favor.';
+
+          final speakingStates = <bool>[];
+          vm.addListener(
+              () => speakingStates.add(vm.isSpeakingOrder));
+
+          await vm.speakOrder();
+
+          expect(speakingStates, contains(true));
+          expect(speakingStates.last, isFalse);
+        });
+      });
+
+      test('resetForNewCapture clears order state', () {
+        final vm = createVmWithMenu();
+        vm.addToOrder(0);
+        vm.addToOrder(1);
+        vm.orderPhrase = 'Some phrase';
+
+        vm.resetForNewCapture();
+
+        expect(vm.orderItems, isEmpty);
+        expect(vm.orderPhrase, isNull);
+        expect(vm.hasOrder, isFalse);
+      });
+    });
+
     group('dispose()', () {
       test('does not throw', () {
         final vm = createViewModel();

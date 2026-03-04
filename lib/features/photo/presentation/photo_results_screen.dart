@@ -12,6 +12,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../photo_view_model.dart';
 import 'widgets/menu_item_row.dart';
 import 'widgets/menu_section_header.dart';
+import 'widgets/order_item_row.dart';
 
 /// Results screen showing translated menu items from a photo.
 ///
@@ -37,7 +38,7 @@ class _PhotoResultsScreenState extends State<PhotoResultsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _viewModel = PhotoViewModel(
       apiClient: ServiceLocator.apiClient,
       historyRepo: ServiceLocator.historyRepo,
@@ -152,9 +153,38 @@ class _PhotoResultsScreenState extends State<PhotoResultsScreen>
             bottom: hasResult
                 ? TabBar(
                     controller: _tabController,
-                    tabs: const [
-                      Tab(text: 'Translation'),
-                      Tab(text: 'Original Photo'),
+                    tabs: [
+                      const Tab(text: 'Translation'),
+                      Tab(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text('My Order'),
+                            if (_viewModel.orderTotalCount > 0) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 1,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.saffron,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  '${_viewModel.orderTotalCount}',
+                                  style: GoogleFonts.nunito(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.stone900,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const Tab(text: 'Original Photo'),
                     ],
                     indicatorColor: AppColors.terracotta,
                     labelColor: AppColors.white,
@@ -172,6 +202,7 @@ class _PhotoResultsScreenState extends State<PhotoResultsScreen>
                           controller: _tabController,
                           children: [
                             _buildTranslationTab(),
+                            _buildOrderTab(),
                             _buildOriginalPhotoTab(),
                           ],
                         )
@@ -327,6 +358,8 @@ class _PhotoResultsScreenState extends State<PhotoResultsScreen>
             onTap: () => _viewModel.toggleItemExpansion(itemIndex),
             isSpeaking: _viewModel.isSpeaking,
             onSpeak: () => _viewModel.speakText(item.originalName),
+            onAddToOrder: () => _viewModel.addToOrder(itemIndex),
+            orderQuantity: _viewModel.orderItems[itemIndex] ?? 0,
           )
               .animate()
               .fadeIn(
@@ -347,6 +380,180 @@ class _PhotoResultsScreenState extends State<PhotoResultsScreen>
         icon: const Icon(Icons.add_a_photo),
         label: const Text('Scan Another Page'),
       ),
+    );
+  }
+
+  Widget _buildOrderTab() {
+    if (!_viewModel.hasOrder) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.xl3),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.restaurant_menu,
+                size: 48,
+                color: AppColors.stone400,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              Text(
+                'Tap + on menu items to\nbuild your order',
+                style: GoogleFonts.nunito(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.stone500,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final items = _viewModel.orderItemList;
+
+    return Column(
+      children: [
+        Expanded(
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+            itemCount: items.length,
+            separatorBuilder: (_, _) {
+              final isDark =
+                  Theme.of(context).brightness == Brightness.dark;
+              return Divider(
+                height: 1,
+                indent: AppSpacing.pageHorizontal,
+                endIndent: AppSpacing.pageHorizontal,
+                color: isDark ? AppColors.stone700 : AppColors.stone200,
+              );
+            },
+            itemBuilder: (context, index) {
+              final (idx, item, qty) = items[index];
+              return OrderItemRow(
+                item: item,
+                quantity: qty,
+                onAdd: () => _viewModel.addToOrder(idx),
+                onRemove: () => _viewModel.removeFromOrder(idx),
+              );
+            },
+          ),
+        ),
+        // Bottom action area.
+        Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 8,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.pageHorizontal,
+            AppSpacing.md,
+            AppSpacing.pageHorizontal,
+            AppSpacing.md + MediaQuery.of(context).padding.bottom,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Generated phrase card.
+              if (_viewModel.orderPhrase != null) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: AppColors.saffronFaint,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.saffronLight),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Say this to the waiter:',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.saffronDark,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        _viewModel.orderPhrase!,
+                        style: GoogleFonts.nunito(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.stone900,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+              ],
+              // Action buttons.
+              Row(
+                children: [
+                  // Translate / Speak button.
+                  Expanded(
+                    child: _viewModel.orderPhrase == null
+                        ? FilledButton.icon(
+                            onPressed: _viewModel.isGeneratingOrder
+                                ? null
+                                : () => _viewModel.generateOrderPhrase(),
+                            icon: _viewModel.isGeneratingOrder
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppColors.white,
+                                    ),
+                                  )
+                                : const Icon(Icons.translate),
+                            label: Text(
+                              _viewModel.isGeneratingOrder
+                                  ? 'Translating...'
+                                  : 'Translate Order',
+                            ),
+                          )
+                        : FilledButton.icon(
+                            onPressed: _viewModel.isSpeakingOrder
+                                ? null
+                                : () => _viewModel.speakOrder(),
+                            icon: Icon(
+                              _viewModel.isSpeakingOrder
+                                  ? Icons.volume_up
+                                  : Icons.volume_up_outlined,
+                            ),
+                            label: Text(
+                              _viewModel.isSpeakingOrder
+                                  ? 'Speaking...'
+                                  : 'Speak My Order',
+                            ),
+                          ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  // Clear button.
+                  OutlinedButton(
+                    onPressed: () => _viewModel.clearOrder(),
+                    child: const Text('Clear'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

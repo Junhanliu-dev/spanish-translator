@@ -51,6 +51,19 @@ class PhotoViewModel extends ChangeNotifier {
   bool isSpeaking = false;
   String? _currentTtsPath;
 
+  // --- Order State ---
+  /// Map of globalItemIndex → quantity for items the user wants to order.
+  final Map<int, int> orderItems = {};
+
+  /// Cached generated ordering phrase (nulled when order changes).
+  String? orderPhrase;
+
+  /// Whether an order phrase is currently being generated.
+  bool isGeneratingOrder = false;
+
+  /// Whether the order phrase TTS is playing.
+  bool isSpeakingOrder = false;
+
   /// Capture a photo from the device camera.
   Future<String?> capturePhoto() async {
     state = PhotoState.capturing;
@@ -226,6 +239,8 @@ class PhotoViewModel extends ChangeNotifier {
     expandedItemIndex = null;
     isSaved = false;
     _lastSavedId = null;
+    orderItems.clear();
+    orderPhrase = null;
     notifyListeners();
   }
 
@@ -267,6 +282,117 @@ class PhotoViewModel extends ChangeNotifier {
       await _player.play(DeviceFileSource(_currentTtsPath!));
     } catch (_) {
       isSpeaking = false;
+      if (!_isDisposed) notifyListeners();
+    }
+  }
+
+  // --- Order Methods ---
+
+  /// Add one unit of a menu item to the order.
+  void addToOrder(int globalItemIndex) {
+    orderItems[globalItemIndex] = (orderItems[globalItemIndex] ?? 0) + 1;
+    orderPhrase = null;
+    notifyListeners();
+  }
+
+  /// Remove one unit of a menu item from the order.
+  void removeFromOrder(int globalItemIndex) {
+    final current = orderItems[globalItemIndex] ?? 0;
+    if (current <= 1) {
+      orderItems.remove(globalItemIndex);
+    } else {
+      orderItems[globalItemIndex] = current - 1;
+    }
+    orderPhrase = null;
+    notifyListeners();
+  }
+
+  /// Clear the entire order.
+  void clearOrder() {
+    orderItems.clear();
+    orderPhrase = null;
+    notifyListeners();
+  }
+
+  /// Whether the user has any items in their order.
+  bool get hasOrder => orderItems.isNotEmpty;
+
+  /// Total number of items (sum of quantities) in the order.
+  int get orderTotalCount =>
+      orderItems.values.fold(0, (sum, qty) => sum + qty);
+
+  /// Build a flat list of all menu items across all sections.
+  List<MenuItem> get _flatMenuItems {
+    if (menuResult == null) return [];
+    return menuResult!.sections.expand((s) => s.items).toList();
+  }
+
+  /// Get the ordered items as a list of (index, MenuItem, quantity) tuples,
+  /// sorted by index to preserve menu order.
+  List<(int index, MenuItem item, int quantity)> get orderItemList {
+    final flat = _flatMenuItems;
+    final entries = orderItems.entries
+        .where((e) => e.key < flat.length)
+        .map((e) => (e.key, flat[e.key], e.value))
+        .toList();
+    entries.sort((a, b) => a.$1.compareTo(b.$1));
+    return entries;
+  }
+
+  /// Generate a polite ordering phrase in the restaurant's language.
+  Future<void> generateOrderPhrase() async {
+    if (!hasOrder || menuResult == null) return;
+
+    isGeneratingOrder = true;
+    notifyListeners();
+
+    try {
+      final items = orderItemList
+          .map((e) => (e.$2.originalName, e.$3))
+          .toList();
+
+      orderPhrase = await _apiClient.generateOrderPhrase(
+        items: items,
+        restaurantLanguage: menuResult!.detectedLanguage,
+      );
+    } catch (e) {
+      orderPhrase = null;
+    }
+
+    isGeneratingOrder = false;
+    if (!_isDisposed) notifyListeners();
+  }
+
+  /// Speak the generated order phrase via TTS.
+  Future<void> speakOrder() async {
+    if (orderPhrase == null || orderPhrase!.isEmpty) return;
+
+    try {
+      isSpeakingOrder = true;
+      notifyListeners();
+
+      if (_currentTtsPath != null) {
+        try {
+          await File(_currentTtsPath!).delete();
+        } catch (_) {}
+      }
+
+      _currentTtsPath = await _apiClient.textToSpeech(
+        text: orderPhrase!,
+        speed: 0.85,
+      );
+
+      if (_isDisposed) return;
+
+      _playerSubscription?.cancel();
+      _playerSubscription = _player.onPlayerComplete.listen((_) {
+        isSpeakingOrder = false;
+        if (!_isDisposed) notifyListeners();
+      });
+
+      await _player.play(DeviceFileSource(_currentTtsPath!));
+    } catch (_) {
+      isSpeakingOrder = false;
       if (!_isDisposed) notifyListeners();
     }
   }

@@ -17,6 +17,8 @@ class MenuItemRow extends StatelessWidget {
     required this.onTap,
     this.onSpeak,
     this.isSpeaking = false,
+    this.onAddToOrder,
+    this.orderQuantity = 0,
   });
 
   /// The menu item data.
@@ -33,6 +35,12 @@ class MenuItemRow extends StatelessWidget {
 
   /// Whether TTS is currently playing.
   final bool isSpeaking;
+
+  /// Called when the user taps "+" to add this item to their order.
+  final VoidCallback? onAddToOrder;
+
+  /// Current quantity of this item in the order (0 = not in order).
+  final int orderQuantity;
 
   @override
   Widget build(BuildContext context) {
@@ -90,6 +98,13 @@ class MenuItemRow extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           color: AppColors.stone700,
                         ),
+                  ),
+                ],
+                if (onAddToOrder != null) ...[
+                  const SizedBox(width: AppSpacing.sm),
+                  _AddToOrderButton(
+                    quantity: orderQuantity,
+                    onTap: onAddToOrder!,
                   ),
                 ],
                 const SizedBox(width: AppSpacing.xs),
@@ -213,6 +228,55 @@ class _ExpandedContent extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+/// Small "+" button that shows a quantity badge when items are in the order.
+class _AddToOrderButton extends StatelessWidget {
+  const _AddToOrderButton({
+    required this.quantity,
+    required this.onTap,
+  });
+
+  final int quantity;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasItems = quantity > 0;
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: hasItems ? AppColors.terracotta : Colors.transparent,
+          border: Border.all(
+            color: hasItems ? AppColors.terracotta : AppColors.stone400,
+            width: 1.5,
+          ),
+          shape: BoxShape.circle,
+        ),
+        alignment: Alignment.center,
+        child: hasItems
+            ? Text(
+                '$quantity',
+                style: GoogleFonts.nunito(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.white,
+                ),
+              )
+            : Icon(
+                Icons.add,
+                size: 16,
+                color: AppColors.stone500,
+              ),
+      ),
     );
   }
 }
