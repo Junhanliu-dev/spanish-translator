@@ -4,6 +4,7 @@ class RoutePaths {
 
   // Shell routes (bottom nav)
   static const String home = '/home';
+  static const String discover = '/discover';
   static const String history = '/history';
   static const String settings = '/settings';
   static const String settingsApiKeyGuide = '/settings/api-key-guide';

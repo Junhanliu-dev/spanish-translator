@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/discover/presentation/discover_screen.dart';
 import '../../features/history/presentation/history_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/onboarding/presentation/api_key_screen.dart';
@@ -75,6 +76,12 @@ GoRouter createRouter({
             ),
           ),
           GoRoute(
+            path: RoutePaths.discover,
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: DiscoverScreen(),
+            ),
+          ),
+          GoRoute(
             path: RoutePaths.history,
             pageBuilder: (context, state) => const NoTransitionPage(
               child: HistoryScreen(),
@@ -141,6 +148,7 @@ class _AppShellState extends State<_AppShell> {
 
   static const _tabs = [
     RoutePaths.home,
+    RoutePaths.discover,
     RoutePaths.history,
     RoutePaths.settings,
   ];
@@ -168,6 +176,10 @@ class _AppShellState extends State<_AppShell> {
           NavigationDestination(
             icon: Icon(Icons.home_rounded),
             label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.explore),
+            label: 'Discover',
           ),
           NavigationDestination(
             icon: Icon(Icons.history),
