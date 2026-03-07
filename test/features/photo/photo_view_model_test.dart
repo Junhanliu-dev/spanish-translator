@@ -630,6 +630,377 @@ void main() {
       });
     });
 
+    group('multi-page support', () {
+      test('isAddingPage is initially false', () {
+        final vm = createViewModel();
+        expect(vm.isAddingPage, isFalse);
+      });
+
+      group('mergePageResult()', () {
+        test('appends sections from new page to existing result', () {
+          final vm = createViewModel();
+          vm.menuResult = MenuTranslationResponse(
+            detectedLanguage: 'es',
+            sections: [
+              MenuSection(
+                originalTitle: 'Entrantes',
+                translatedTitle: 'Starters',
+                items: [
+                  const MenuItem(
+                    originalName: 'Gazpacho',
+                    translatedName: 'Cold tomato soup',
+                  ),
+                ],
+              ),
+            ],
+          );
+          vm.pageImagePaths.add('/page1.jpg');
+
+          final page2Result = MenuTranslationResponse(
+            detectedLanguage: 'es',
+            sections: [
+              MenuSection(
+                originalTitle: 'Postres',
+                translatedTitle: 'Desserts',
+                items: [
+                  const MenuItem(
+                    originalName: 'Flan',
+                    translatedName: 'Caramel custard',
+                  ),
+                ],
+              ),
+            ],
+          );
+
+          vm.mergePageResult(page2Result, '/page2.jpg');
+
+          expect(vm.menuResult!.sections.length, 2);
+          expect(vm.menuResult!.sections[0].originalTitle, 'Entrantes');
+          expect(vm.menuResult!.sections[1].originalTitle, 'Postres');
+        });
+
+        test('adds image path to pageImagePaths', () {
+          final vm = createViewModel();
+          vm.menuResult = const MenuTranslationResponse(
+            detectedLanguage: 'es',
+            sections: [],
+          );
+
+          vm.mergePageResult(
+            const MenuTranslationResponse(
+              detectedLanguage: 'es',
+              sections: [],
+            ),
+            '/page2.jpg',
+          );
+
+          expect(vm.pageImagePaths, contains('/page2.jpg'));
+        });
+
+        test('does not add duplicate image paths', () {
+          final vm = createViewModel();
+          vm.menuResult = const MenuTranslationResponse(
+            detectedLanguage: 'es',
+            sections: [],
+          );
+          vm.pageImagePaths.add('/page1.jpg');
+
+          vm.mergePageResult(
+            const MenuTranslationResponse(
+              detectedLanguage: 'es',
+              sections: [],
+            ),
+            '/page1.jpg',
+          );
+
+          expect(vm.pageImagePaths.length, 1);
+        });
+
+        test('invalidates orderPhrase', () {
+          final vm = createViewModel();
+          vm.menuResult = const MenuTranslationResponse(
+            detectedLanguage: 'es',
+            sections: [],
+          );
+          vm.orderPhrase = 'Previously generated phrase';
+
+          vm.mergePageResult(
+            const MenuTranslationResponse(
+              detectedLanguage: 'es',
+              sections: [],
+            ),
+            '/page2.jpg',
+          );
+
+          expect(vm.orderPhrase, isNull);
+        });
+
+        test('preserves detected language from first page', () {
+          final vm = createViewModel();
+          vm.menuResult = const MenuTranslationResponse(
+            detectedLanguage: 'es',
+            sections: [],
+          );
+
+          vm.mergePageResult(
+            const MenuTranslationResponse(
+              detectedLanguage: 'fr',
+              sections: [],
+            ),
+            '/page2.jpg',
+          );
+
+          expect(vm.menuResult!.detectedLanguage, 'es');
+        });
+
+        test('creates menuResult when null (first page via merge)', () {
+          final vm = createViewModel();
+
+          final result = MenuTranslationResponse(
+            detectedLanguage: 'es',
+            sections: [
+              MenuSection(
+                originalTitle: 'Test',
+                translatedTitle: 'Test',
+                items: [
+                  const MenuItem(
+                    originalName: 'Item1',
+                    translatedName: 'Item1 EN',
+                  ),
+                ],
+              ),
+            ],
+          );
+
+          vm.mergePageResult(result, '/page1.jpg');
+
+          expect(vm.menuResult, isNotNull);
+          expect(vm.menuResult!.sections.length, 1);
+        });
+
+        test('preserves existing order items after merge', () {
+          final vm = createViewModel();
+          vm.menuResult = MenuTranslationResponse(
+            detectedLanguage: 'es',
+            sections: [
+              MenuSection(
+                originalTitle: 'Entrantes',
+                translatedTitle: 'Starters',
+                items: [
+                  const MenuItem(
+                    originalName: 'Gazpacho',
+                    translatedName: 'Cold tomato soup',
+                  ),
+                ],
+              ),
+            ],
+          );
+          vm.addToOrder(0); // Order Gazpacho
+
+          vm.mergePageResult(
+            MenuTranslationResponse(
+              detectedLanguage: 'es',
+              sections: [
+                MenuSection(
+                  originalTitle: 'Postres',
+                  translatedTitle: 'Desserts',
+                  items: [
+                    const MenuItem(
+                      originalName: 'Flan',
+                      translatedName: 'Caramel custard',
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            '/page2.jpg',
+          );
+
+          expect(vm.orderItems[0], 1);
+          expect(vm.orderItemList.length, 1);
+          expect(vm.orderItemList[0].$2.originalName, 'Gazpacho');
+        });
+
+        test('new items from merged page are orderable', () {
+          final vm = createViewModel();
+          vm.menuResult = MenuTranslationResponse(
+            detectedLanguage: 'es',
+            sections: [
+              MenuSection(
+                originalTitle: 'Entrantes',
+                translatedTitle: 'Starters',
+                items: [
+                  const MenuItem(
+                    originalName: 'Gazpacho',
+                    translatedName: 'Cold tomato soup',
+                  ),
+                ],
+              ),
+            ],
+          );
+
+          vm.mergePageResult(
+            MenuTranslationResponse(
+              detectedLanguage: 'es',
+              sections: [
+                MenuSection(
+                  originalTitle: 'Postres',
+                  translatedTitle: 'Desserts',
+                  items: [
+                    const MenuItem(
+                      originalName: 'Flan',
+                      translatedName: 'Caramel custard',
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            '/page2.jpg',
+          );
+
+          vm.addToOrder(1); // Flan is index 1
+          expect(vm.orderItemList.length, 1);
+          expect(vm.orderItemList[0].$2.originalName, 'Flan');
+          expect(vm.orderItemList[0].$3, 1);
+        });
+
+        test('totalItemCount reflects merged items', () {
+          final vm = createViewModel();
+          vm.menuResult = MenuTranslationResponse(
+            detectedLanguage: 'es',
+            sections: [
+              MenuSection(
+                originalTitle: 'Entrantes',
+                translatedTitle: 'Starters',
+                items: [
+                  const MenuItem(
+                    originalName: 'Gazpacho',
+                    translatedName: 'Cold tomato soup',
+                  ),
+                  const MenuItem(
+                    originalName: 'Tortilla',
+                    translatedName: 'Spanish omelette',
+                  ),
+                ],
+              ),
+            ],
+          );
+
+          expect(vm.totalItemCount, 2);
+
+          vm.mergePageResult(
+            MenuTranslationResponse(
+              detectedLanguage: 'es',
+              sections: [
+                MenuSection(
+                  originalTitle: 'Postres',
+                  translatedTitle: 'Desserts',
+                  items: [
+                    const MenuItem(
+                      originalName: 'Flan',
+                      translatedName: 'Caramel custard',
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            '/page2.jpg',
+          );
+
+          expect(vm.totalItemCount, 3);
+        });
+
+        test('notifies listeners', () {
+          final vm = createViewModel();
+          vm.menuResult = const MenuTranslationResponse(
+            detectedLanguage: 'es',
+            sections: [],
+          );
+
+          var notified = false;
+          vm.addListener(() => notified = true);
+
+          vm.mergePageResult(
+            const MenuTranslationResponse(
+              detectedLanguage: 'es',
+              sections: [],
+            ),
+            '/page2.jpg',
+          );
+
+          expect(notified, isTrue);
+        });
+
+        test('merging three pages accumulates all sections', () {
+          final vm = createViewModel();
+
+          // Page 1
+          vm.mergePageResult(
+            MenuTranslationResponse(
+              detectedLanguage: 'es',
+              sections: [
+                MenuSection(
+                  originalTitle: 'Entrantes',
+                  translatedTitle: 'Starters',
+                  items: [
+                    const MenuItem(
+                      originalName: 'Gazpacho',
+                      translatedName: 'Cold tomato soup',
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            '/page1.jpg',
+          );
+
+          // Page 2
+          vm.mergePageResult(
+            MenuTranslationResponse(
+              detectedLanguage: 'es',
+              sections: [
+                MenuSection(
+                  originalTitle: 'Principales',
+                  translatedTitle: 'Mains',
+                  items: [
+                    const MenuItem(
+                      originalName: 'Paella',
+                      translatedName: 'Seafood rice',
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            '/page2.jpg',
+          );
+
+          // Page 3
+          vm.mergePageResult(
+            MenuTranslationResponse(
+              detectedLanguage: 'es',
+              sections: [
+                MenuSection(
+                  originalTitle: 'Postres',
+                  translatedTitle: 'Desserts',
+                  items: [
+                    const MenuItem(
+                      originalName: 'Flan',
+                      translatedName: 'Caramel custard',
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            '/page3.jpg',
+          );
+
+          expect(vm.menuResult!.sections.length, 3);
+          expect(vm.pageImagePaths.length, 3);
+          expect(vm.totalItemCount, 3);
+        });
+      });
+    });
+
     group('dispose()', () {
       test('does not throw', () {
         final vm = createViewModel();

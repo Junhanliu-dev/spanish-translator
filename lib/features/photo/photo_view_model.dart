@@ -50,6 +50,7 @@ class PhotoViewModel extends ChangeNotifier {
   int? _lastSavedId;
   bool isSpeaking = false;
   String? _currentTtsPath;
+  bool isAddingPage = false;
 
   // --- Order State ---
   /// Map of globalItemIndex → quantity for items the user wants to order.
@@ -119,6 +120,34 @@ class PhotoViewModel extends ChangeNotifier {
     }
   }
 
+  /// Capture an additional photo without changing main state.
+  Future<String?> captureAdditionalPhoto() async {
+    try {
+      final image = await _picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 90,
+        maxWidth: 2048,
+      );
+      return image?.path;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Pick an additional photo from gallery without changing main state.
+  Future<String?> pickAdditionalFromGallery() async {
+    try {
+      final image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 90,
+        maxWidth: 2048,
+      );
+      return image?.path;
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Compress and send the image to GPT-4o Vision for menu translation.
   ///
   /// Called when the user taps "Use Photo" on the preview screen.
@@ -162,6 +191,70 @@ class PhotoViewModel extends ChangeNotifier {
       state = PhotoState.error;
       errorMessage = mapErrorToMessage(e);
       notifyListeners();
+    }
+  }
+
+  /// Merge additional page results into existing menu.
+  ///
+  /// Appends new sections to existing [menuResult]. If [menuResult] is null,
+  /// the new result becomes the initial result. Preserves the detected
+  /// language from the first page.
+  void mergePageResult(MenuTranslationResponse newResult, String imagePath) {
+    if (menuResult != null) {
+      menuResult = MenuTranslationResponse(
+        sections: [...menuResult!.sections, ...newResult.sections],
+        detectedLanguage: menuResult!.detectedLanguage,
+      );
+    } else {
+      menuResult = newResult;
+    }
+
+    if (!pageImagePaths.contains(imagePath)) {
+      pageImagePaths.add(imagePath);
+    }
+
+    orderPhrase = null;
+    notifyListeners();
+  }
+
+  /// Compress and send an additional page image for translation, then merge
+  /// results into the existing menu.
+  ///
+  /// Unlike [processImage], this preserves existing results and appends new
+  /// sections. Returns true on success.
+  Future<bool> processAdditionalImage(String imagePath) async {
+    isAddingPage = true;
+    notifyListeners();
+
+    try {
+      final compressed = await ImageCompressor.compress(
+        imagePath: imagePath,
+        maxDimension: 1024,
+        quality: 80,
+      );
+
+      final bytes = await File(compressed).readAsBytes();
+      final base64Image = base64Encode(bytes);
+
+      final newResult = await _apiClient.translateImage(
+        base64Image: base64Image,
+        targetLanguage: _languagePrefs.sourceLanguage.code,
+      );
+
+      mergePageResult(newResult, imagePath);
+
+      try {
+        await File(compressed).delete();
+      } catch (_) {}
+
+      isAddingPage = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      errorMessage = mapErrorToMessage(e);
+      isAddingPage = false;
+      notifyListeners();
+      return false;
     }
   }
 

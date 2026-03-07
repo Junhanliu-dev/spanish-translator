@@ -34,11 +34,14 @@ class _PhotoResultsScreenState extends State<PhotoResultsScreen>
     with SingleTickerProviderStateMixin {
   late final PhotoViewModel _viewModel;
   late final TabController _tabController;
+  late final PageController _photoPageController;
+  int _currentPhotoPage = 0;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _photoPageController = PageController();
     _viewModel = PhotoViewModel(
       apiClient: ServiceLocator.apiClient,
       historyRepo: ServiceLocator.historyRepo,
@@ -50,6 +53,7 @@ class _PhotoResultsScreenState extends State<PhotoResultsScreen>
 
   @override
   void dispose() {
+    _photoPageController.dispose();
     _tabController.dispose();
     _viewModel.dispose();
     super.dispose();
@@ -112,6 +116,77 @@ class _PhotoResultsScreenState extends State<PhotoResultsScreen>
           duration: const Duration(seconds: 2),
         ),
       );
+    }
+  }
+
+  void _showAddPageSheet() {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.md),
+              child: Text(
+                'Add Another Page',
+                style: GoogleFonts.nunito(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Take Photo'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _addPageFromCamera();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Choose from Gallery'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _addPageFromGallery();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _addPageFromCamera() async {
+    final path = await _viewModel.captureAdditionalPhoto();
+    if (path != null) {
+      final success = await _viewModel.processAdditionalImage(path);
+      if (mounted && !success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _viewModel.errorMessage ?? 'Could not read this page',
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _addPageFromGallery() async {
+    final path = await _viewModel.pickAdditionalFromGallery();
+    if (path != null) {
+      final success = await _viewModel.processAdditionalImage(path);
+      if (mounted && !success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _viewModel.errorMessage ?? 'Could not read this page',
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -184,7 +259,11 @@ class _PhotoResultsScreenState extends State<PhotoResultsScreen>
                           ],
                         ),
                       ),
-                      const Tab(text: 'Original Photo'),
+                      Tab(
+                        text: _viewModel.pageImagePaths.length > 1
+                            ? 'Photos (${_viewModel.pageImagePaths.length})'
+                            : 'Original Photo',
+                      ),
                     ],
                     indicatorColor: AppColors.terracotta,
                     labelColor: AppColors.white,
@@ -198,12 +277,22 @@ class _PhotoResultsScreenState extends State<PhotoResultsScreen>
               : hasError
                   ? _buildErrorState()
                   : hasResult
-                      ? TabBarView(
-                          controller: _tabController,
+                      ? Column(
                           children: [
-                            _buildTranslationTab(),
-                            _buildOrderTab(),
-                            _buildOriginalPhotoTab(),
+                            if (_viewModel.isAddingPage)
+                              const LinearProgressIndicator(
+                                color: AppColors.terracotta,
+                              ),
+                            Expanded(
+                              child: TabBarView(
+                                controller: _tabController,
+                                children: [
+                                  _buildTranslationTab(),
+                                  _buildOrderTab(),
+                                  _buildOriginalPhotoTab(),
+                                ],
+                              ),
+                            ),
                           ],
                         )
                       : const SizedBox.shrink(),
@@ -324,12 +413,13 @@ class _PhotoResultsScreenState extends State<PhotoResultsScreen>
   }
 
   int _itemCount(MenuTranslationResponse result) {
-    // sections + items + scan another page button.
+    // sections + items + optional loading card + scan another page button.
     var count = 0;
     for (final section in result.sections) {
       count++; // section header
       count += section.items.length;
     }
+    if (_viewModel.isAddingPage) count++; // loading card
     count++; // scan another page button
     return count;
   }
@@ -372,13 +462,46 @@ class _PhotoResultsScreenState extends State<PhotoResultsScreen>
       }
     }
 
+    // Loading card while adding a page.
+    if (_viewModel.isAddingPage && currentIndex == listIndex) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.terracotta,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              'Reading page ${_viewModel.pageImagePaths.length + 1}...',
+              style: GoogleFonts.nunito(
+                fontSize: 14,
+                color: AppColors.stone500,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     // Scan Another Page button.
+    final pageCount = _viewModel.pageImagePaths.length;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl2),
       child: OutlinedButton.icon(
-        onPressed: () => context.go('/photo'),
+        onPressed: _viewModel.isAddingPage ? null : _showAddPageSheet,
         icon: const Icon(Icons.add_a_photo),
-        label: const Text('Scan Another Page'),
+        label: Text(
+          pageCount > 1
+              ? 'Scan Another Page ($pageCount scanned)'
+              : 'Scan Another Page',
+        ),
       ),
     );
   }
@@ -558,32 +681,100 @@ class _PhotoResultsScreenState extends State<PhotoResultsScreen>
   }
 
   Widget _buildOriginalPhotoTab() {
+    final paths = _viewModel.pageImagePaths.isNotEmpty
+        ? _viewModel.pageImagePaths
+        : [widget.imagePath];
+
+    if (paths.length == 1) {
+      return Column(
+        children: [
+          Expanded(
+            child: InteractiveViewer(
+              panEnabled: true,
+              minScale: 0.8,
+              maxScale: 4.0,
+              child: Image.file(
+                File(paths.first),
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Center(
+                    child: Icon(Icons.error, size: 48),
+                  );
+                },
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Text(
+              'Original photo -- zoom to read small text',
+              style: GoogleFonts.nunito(
+                fontSize: 12,
+                color: AppColors.stone500,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Multiple photos — PageView with page indicator.
     return Column(
       children: [
         Expanded(
-          child: InteractiveViewer(
-            panEnabled: true,
-            minScale: 0.8,
-            maxScale: 4.0,
-            child: Image.file(
-              File(widget.imagePath),
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) {
-                return const Center(
-                  child: Icon(Icons.error, size: 48),
-                );
-              },
-            ),
+          child: PageView.builder(
+            controller: _photoPageController,
+            onPageChanged: (page) =>
+                setState(() => _currentPhotoPage = page),
+            itemCount: paths.length,
+            itemBuilder: (context, index) {
+              return InteractiveViewer(
+                panEnabled: true,
+                minScale: 0.8,
+                maxScale: 4.0,
+                child: Image.file(
+                  File(paths[index]),
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Center(
+                      child: Icon(Icons.error, size: 48),
+                    );
+                  },
+                ),
+              );
+            },
           ),
         ),
         Padding(
           padding: const EdgeInsets.all(AppSpacing.md),
-          child: Text(
-            'Original photo -- zoom to read small text',
-            style: GoogleFonts.nunito(
-              fontSize: 12,
-              color: AppColors.stone500,
-            ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(paths.length, (index) {
+                  return Container(
+                    width: 8,
+                    height: 8,
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: index == _currentPhotoPage
+                          ? AppColors.terracotta
+                          : AppColors.stone400,
+                    ),
+                  );
+                }),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                'Page ${_currentPhotoPage + 1} of ${paths.length}'
+                ' -- zoom to read small text',
+                style: GoogleFonts.nunito(
+                  fontSize: 12,
+                  color: AppColors.stone500,
+                ),
+              ),
+            ],
           ),
         ),
       ],
