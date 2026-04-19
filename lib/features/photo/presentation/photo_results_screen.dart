@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/api/openai_client.dart';
 import '../../../core/service_locator.dart';
@@ -130,7 +129,7 @@ class _PhotoResultsScreenState extends State<PhotoResultsScreen>
               padding: const EdgeInsets.only(top: AppSpacing.md),
               child: Text(
                 'Add Another Page',
-                style: GoogleFonts.nunito(
+                style: const TextStyle(fontFamily: 'Nunito', 
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                 ),
@@ -248,7 +247,7 @@ class _PhotoResultsScreenState extends State<PhotoResultsScreen>
                                 ),
                                 child: Text(
                                   '${_viewModel.orderTotalCount}',
-                                  style: GoogleFonts.nunito(
+                                  style: const TextStyle(fontFamily: 'Nunito', 
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
                                     color: AppColors.stone900,
@@ -335,7 +334,7 @@ class _PhotoResultsScreenState extends State<PhotoResultsScreen>
               const SizedBox(height: AppSpacing.xl2),
               Text(
                 'Reading and translating\nyour menu...',
-                style: GoogleFonts.nunito(
+                style: const TextStyle(fontFamily: 'Nunito', 
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
                   color: AppColors.stone700,
@@ -480,7 +479,7 @@ class _PhotoResultsScreenState extends State<PhotoResultsScreen>
             const SizedBox(width: AppSpacing.sm),
             Text(
               'Reading page ${_viewModel.pageImagePaths.length + 1}...',
-              style: GoogleFonts.nunito(
+              style: const TextStyle(fontFamily: 'Nunito', 
                 fontSize: 14,
                 color: AppColors.stone500,
               ),
@@ -522,7 +521,7 @@ class _PhotoResultsScreenState extends State<PhotoResultsScreen>
               const SizedBox(height: AppSpacing.lg),
               Text(
                 'Tap + on menu items to\nbuild your order',
-                style: GoogleFonts.nunito(
+                style: const TextStyle(fontFamily: 'Nunito', 
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                   color: AppColors.stone500,
@@ -601,7 +600,7 @@ class _PhotoResultsScreenState extends State<PhotoResultsScreen>
                     children: [
                       Text(
                         'Say this to the waiter:',
-                        style: GoogleFonts.dmSans(
+                        style: const TextStyle(fontFamily: 'DMSans', 
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: AppColors.saffronDark,
@@ -611,7 +610,7 @@ class _PhotoResultsScreenState extends State<PhotoResultsScreen>
                       const SizedBox(height: 6),
                       Text(
                         _viewModel.orderPhrase!,
-                        style: GoogleFonts.nunito(
+                        style: const TextStyle(fontFamily: 'Nunito', 
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: AppColors.stone900,
@@ -708,7 +707,7 @@ class _PhotoResultsScreenState extends State<PhotoResultsScreen>
             padding: const EdgeInsets.all(AppSpacing.md),
             child: Text(
               'Original photo -- zoom to read small text',
-              style: GoogleFonts.nunito(
+              style: const TextStyle(fontFamily: 'Nunito', 
                 fontSize: 12,
                 color: AppColors.stone500,
               ),
@@ -769,7 +768,7 @@ class _PhotoResultsScreenState extends State<PhotoResultsScreen>
               Text(
                 'Page ${_currentPhotoPage + 1} of ${paths.length}'
                 ' -- zoom to read small text',
-                style: GoogleFonts.nunito(
+                style: const TextStyle(fontFamily: 'Nunito', 
                   fontSize: 12,
                   color: AppColors.stone500,
                 ),

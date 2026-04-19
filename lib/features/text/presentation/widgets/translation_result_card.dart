@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/api/openai_client.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -118,7 +117,7 @@ class TranslationResultCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     sourceText!,
-                    style: GoogleFonts.nunito(
+                    style: const TextStyle(fontFamily: 'Nunito', 
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
                       fontStyle: FontStyle.italic,
@@ -157,7 +156,8 @@ class TranslationResultCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     SelectableText(
                       result.translatedText,
-                      style: GoogleFonts.nunito(
+                      style: TextStyle(
+                        fontFamily: 'Nunito',
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
                         color: Theme.of(context).colorScheme.onSurface,
@@ -211,7 +211,7 @@ class TranslationResultCard extends StatelessWidget {
               onToggle: onToggleContext,
               child: Text(
                 result.context!,
-                style: GoogleFonts.nunito(
+                style: const TextStyle(fontFamily: 'Nunito', 
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
                   color: AppColors.stone700,
@@ -230,7 +230,7 @@ class TranslationResultCard extends StatelessWidget {
               onToggle: onTogglePronunciation,
               child: Text(
                 result.pronunciation!,
-                style: GoogleFonts.dmSans(
+                style: const TextStyle(fontFamily: 'DMSans', 
                   fontSize: 13,
                   fontWeight: FontWeight.w400,
                   color: AppColors.stone500,

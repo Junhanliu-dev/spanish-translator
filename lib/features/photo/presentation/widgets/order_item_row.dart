@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -48,7 +47,7 @@ class OrderItemRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   item.translatedName,
-                  style: GoogleFonts.nunito(
+                  style: const TextStyle(fontFamily: 'Nunito', 
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
                     fontStyle: FontStyle.italic,
@@ -61,7 +60,8 @@ class OrderItemRow extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     item.price!,
-                    style: GoogleFonts.nunito(
+                    style: TextStyle(
+                      fontFamily: 'Nunito',
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: priceColor,
@@ -90,7 +90,8 @@ class OrderItemRow extends StatelessWidget {
                   child: Text(
                     '$quantity',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.nunito(
+                    style: TextStyle(
+                      fontFamily: 'Nunito',
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: quantityColor,

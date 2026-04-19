@@ -1,17 +1,21 @@
-import 'dart:io';
-
-import 'package:image/image.dart' as img;
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 /// Utility for compressing images before sending to the Vision API.
+///
+/// Uses the platform-native image codecs (libjpeg on Android/iOS) via
+/// `flutter_image_compress`. The plugin itself dispatches work off the UI
+/// isolate over its platform channel, so the UI thread stays responsive while
+/// a large camera image is being decoded, resized, and re-encoded.
 class ImageCompressor {
   ImageCompressor._();
 
   /// Compress an image file.
   ///
-  /// Resizes so the longest dimension is at most [maxDimension] pixels
-  /// and encodes as JPEG with the given [quality] (0-100).
+  /// The output is bounded by [maxDimension] on its shortest side (aspect
+  /// ratio preserved) and encoded as JPEG at [quality] (0-100). Picks are
+  /// typically ~1024×768 or ~768×1024 after compression.
   ///
   /// Returns the path to the compressed file in the temp directory.
   static Future<String> compress({
@@ -19,35 +23,26 @@ class ImageCompressor {
     int maxDimension = 1024,
     int quality = 80,
   }) async {
-    final file = File(imagePath);
-    final bytes = await file.readAsBytes();
-
-    var image = img.decodeImage(bytes);
-    if (image == null) {
-      throw Exception('Could not decode image at $imagePath');
-    }
-
-    // Resize if needed, preserving aspect ratio.
-    if (image.width > maxDimension || image.height > maxDimension) {
-      if (image.width >= image.height) {
-        image = img.copyResize(image, width: maxDimension);
-      } else {
-        image = img.copyResize(image, height: maxDimension);
-      }
-    }
-
-    // Encode as JPEG.
-    final compressed = img.encodeJpg(image, quality: quality);
-
-    // Write to temp directory.
     final tempDir = await getTemporaryDirectory();
     final outputPath = p.join(
       tempDir.path,
       'compressed_${DateTime.now().millisecondsSinceEpoch}.jpg',
     );
-    final outputFile = File(outputPath);
-    await outputFile.writeAsBytes(compressed);
 
-    return outputPath;
+    final result = await FlutterImageCompress.compressAndGetFile(
+      imagePath,
+      outputPath,
+      quality: quality,
+      minWidth: maxDimension,
+      minHeight: maxDimension,
+      keepExif: false,
+      format: CompressFormat.jpeg,
+    );
+
+    if (result == null) {
+      throw Exception('Could not compress image at $imagePath');
+    }
+
+    return result.path;
   }
 }

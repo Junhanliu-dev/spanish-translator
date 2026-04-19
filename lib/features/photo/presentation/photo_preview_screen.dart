@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -29,7 +28,7 @@ class PhotoPreviewScreen extends StatelessWidget {
         foregroundColor: Colors.white,
         title: Text(
           'Review Photo',
-          style: GoogleFonts.nunito(
+          style: const TextStyle(fontFamily: 'Nunito', 
             fontSize: 20,
             fontWeight: FontWeight.w700,
             color: Colors.white,
@@ -64,7 +63,7 @@ class PhotoPreviewScreen extends StatelessWidget {
                         const SizedBox(height: AppSpacing.md),
                         Text(
                           'Could not load image',
-                          style: GoogleFonts.nunito(
+                          style: const TextStyle(fontFamily: 'Nunito', 
                             color: Colors.white,
                             fontSize: 16,
                           ),

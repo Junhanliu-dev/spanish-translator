@@ -28,7 +28,7 @@ dependencies:
 
   # Camera & Image
   image_picker: ^1.1.2
-  image: ^4.5.2
+  flutter_image_compress: ^2.4.0
 
   # Permissions
   permission_handler: ^11.3.1
@@ -37,7 +37,6 @@ dependencies:
   connectivity_plus: ^6.1.1
 
   # UI & Theming
-  google_fonts: ^6.2.1
   flutter_animate: ^4.5.0
 
   # Utilities
@@ -52,3 +51,15 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  fonts:
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/Nunito-Regular.ttf
+        - asset: assets/fonts/Nunito-Italic.ttf
+          style: italic
+    - family: DMSans
+      fonts:
+        - asset: assets/fonts/DMSans-Regular.ttf
+        - asset: assets/fonts/DMSans-Italic.ttf
+          style: italic
