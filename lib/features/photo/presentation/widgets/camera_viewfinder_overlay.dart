@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_spacing.dart';
 
 /// Decorative overlay for the camera capture screen.
 ///
-/// Shows a guide frame with corner accents, a tip banner, and a subtle
-/// breathing scale animation.
+/// Shows a guide frame with corner accents and a tip banner. Kept as a static
+/// overlay: a previous ~0.5% breathing scale animation was removed because the
+/// visual delta was imperceptible while the ticker kept the raster cache warm
+/// every frame.
 class CameraViewfinderOverlay extends StatelessWidget {
   const CameraViewfinderOverlay({super.key});
 
@@ -22,20 +22,13 @@ class CameraViewfinderOverlay extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Guide frame with corner accents and breathing animation.
             SizedBox(
               width: frameWidth,
               height: frameHeight,
               child: CustomPaint(
                 painter: _ViewfinderPainter(),
               ),
-            )
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .scale(
-                  begin: const Offset(1.0, 1.0),
-                  end: const Offset(1.005, 1.005),
-                  duration: 2000.ms,
-                ),
+            ),
             const SizedBox(height: AppSpacing.lg),
             // Tip banner.
             Container(
@@ -49,7 +42,7 @@ class CameraViewfinderOverlay extends StatelessWidget {
               ),
               child: Text(
                 'Position the menu within the frame',
-                style: GoogleFonts.nunito(
+                style: const TextStyle(fontFamily: 'Nunito', 
                   fontSize: 14,
                   color: Colors.white,
                 ),
