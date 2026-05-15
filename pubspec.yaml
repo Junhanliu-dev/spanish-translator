@@ -1,5 +1,9 @@
 name: lingua_viaje
-description: Food translation app for travelers in Spain and Basque Country.
+description: >-
+  LinguaViaje — snap a menu, speak a phrase, point a camera. Instant Spanish,
+  Basque (Euskara) and English translation for travelers eating their way
+  through Spain. Powered by GPT-4o, Whisper and native TTS. Offline history,
+  private by default.
 publish_to: 'none'
 version: 1.0.0+1
 
