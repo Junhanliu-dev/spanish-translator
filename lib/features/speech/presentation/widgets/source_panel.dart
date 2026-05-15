@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -76,7 +75,7 @@ class SourcePanel extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           SelectableText(
             text!,
-            style: GoogleFonts.nunito(
+            style: const TextStyle(fontFamily: 'Nunito', 
               fontSize: 16,
               fontWeight: FontWeight.w400,
               fontStyle: FontStyle.italic,
@@ -89,7 +88,7 @@ class SourcePanel extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
             child: Text(
               'Your words appear here',
-              style: GoogleFonts.nunito(
+              style: const TextStyle(fontFamily: 'Nunito', 
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
                 fontStyle: FontStyle.italic,

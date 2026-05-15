@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/service_locator.dart';
 import '../../../core/theme/app_colors.dart';
@@ -98,7 +97,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                         padding: const EdgeInsets.only(top: AppSpacing.sm),
                         child: Text(
                           _viewModel.errorMessage!,
-                          style: GoogleFonts.nunito(
+                          style: const TextStyle(fontFamily: 'Nunito', 
                             fontSize: 12,
                             color: AppColors.error,
                           ),
@@ -110,7 +109,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                         padding: const EdgeInsets.only(top: AppSpacing.sm),
                         child: Text(
                           _viewModel.errorMessage!,
-                          style: GoogleFonts.nunito(
+                          style: const TextStyle(fontFamily: 'Nunito', 
                             fontSize: 12,
                             color: AppColors.warning,
                           ),
@@ -336,7 +335,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       ),
       child: Text(
         text,
-        style: GoogleFonts.nunito(
+        style: TextStyle(
+          fontFamily: 'Nunito',
           fontSize: 12,
           fontWeight: FontWeight.w600,
           color: badgeColor,

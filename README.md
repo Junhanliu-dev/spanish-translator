@@ -2,9 +2,24 @@
 
 > **Travel Spain fearlessly — order with confidence, eat with curiosity.**
 
+[![Flutter](https://img.shields.io/badge/Flutter-3.11+-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart&logoColor=white)](https://dart.dev)
+[![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20Android-lightgrey)](#)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#-contributing)
+[![Stars](https://img.shields.io/github/stars/Junhanliu-dev/spanish-translator?style=social)](https://github.com/Junhanliu-dev/spanish-translator/stargazers)
+
+**Topics:** `flutter` · `dart` · `translator` · `spanish` · `basque` · `euskara` · `travel-app` · `menu-translator` · `ocr` · `whisper` · `gpt-4o` · `openai` · `tts` · `mvvm` · `material-3` · `food` · `tapas` · `pintxos` · `language-learning` · `ios` · `android`
+
 LinguaViaje is an open‑source Flutter app that helps travelers decode menus and conversations across **Spanish, Basque (Euskara), and English**. Snap a photo of a menu, speak into your phone, or paste text — LinguaViaje translates it instantly and even pronounces it back in a native voice so you can order like a local.
 
 Built with a clean, modular architecture and powered by the OpenAI API (GPT‑4o, Whisper, TTS), it's a great starting point if you want to learn Flutter, build a travel companion, or fork it into your own language project.
+
+### Who this is for
+🥘 **Travelers** heading to Spain or the Basque Country who want to order food fearlessly
+🧑‍🍳 **Foodies** curious about regional dishes, tapas, pintxos and tasting menus
+📚 **Language learners** practicing Spanish or Basque with real‑world menus
+👩‍💻 **Flutter devs** looking for a clean MVVM + service‑locator reference app to fork
 
 If this project helps you, please ⭐ **star the repo** — it really does make a difference!
 

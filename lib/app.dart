@@ -13,8 +13,9 @@ import 'shared/notifiers/theme_notifier.dart';
 /// Root widget for the LinguaViaje application.
 ///
 /// Wires together [MaterialApp.router], the theme system, and global
-/// notifiers.
-class LinguaViajeApp extends StatelessWidget {
+/// notifiers. Stateful so that we can detach the long-lived connectivity
+/// subscription when the app is torn down.
+class LinguaViajeApp extends StatefulWidget {
   const LinguaViajeApp({
     super.key,
     required this.router,
@@ -37,16 +38,27 @@ class LinguaViajeApp extends StatelessWidget {
   final ThemeNotifier themeNotifier;
 
   @override
+  State<LinguaViajeApp> createState() => _LinguaViajeAppState();
+}
+
+class _LinguaViajeAppState extends State<LinguaViajeApp> {
+  @override
+  void dispose() {
+    widget.connectivityService.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: themeNotifier,
+      listenable: widget.themeNotifier,
       builder: (context, _) {
         return MaterialApp.router(
           title: 'LinguaViaje',
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
-          themeMode: themeNotifier.themeMode,
-          routerConfig: router,
+          themeMode: widget.themeNotifier.themeMode,
+          routerConfig: widget.router,
           debugShowCheckedModeBanner: false,
         );
       },

@@ -1,0 +1,7 @@
+First public release of LinguaViaje:
+• Photo menu translation with multi-page tasting menus
+• Hold-to-record voice translation in Spanish, Basque and English
+• Tap-to-build menu order with spoken playback
+• Offline translation history
+• Discover screen for tapas, pintxos and Basque specialties
+• Material 3 light & dark themes

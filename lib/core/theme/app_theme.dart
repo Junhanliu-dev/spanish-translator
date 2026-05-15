@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
+import 'app_fonts.dart';
 import 'app_theme_extension.dart';
 
 /// Provides [ThemeData] for light and dark modes.
@@ -9,7 +9,12 @@ class AppTheme {
   AppTheme._();
 
   /// Light theme.
-  static ThemeData get light => ThemeData(
+  static final ThemeData light = _buildLightTheme();
+
+  /// Dark theme.
+  static final ThemeData dark = _buildDarkTheme();
+
+  static ThemeData _buildLightTheme() => ThemeData(
         useMaterial3: true,
         colorScheme: const ColorScheme(
           brightness: Brightness.light,
@@ -181,8 +186,7 @@ class AppTheme {
         extensions: const [AppThemeExtension.light],
       );
 
-  /// Dark theme.
-  static ThemeData get dark => ThemeData(
+  static ThemeData _buildDarkTheme() => ThemeData(
         useMaterial3: true,
         colorScheme: const ColorScheme(
           brightness: Brightness.dark,
@@ -258,21 +262,21 @@ class AppTheme {
 
     return TextTheme(
       // Display -- Large hero text (onboarding, empty states)
-      displayLarge: GoogleFonts.nunito(
+      displayLarge: AppFonts.nunito(
         fontSize: 57,
         fontWeight: FontWeight.w700,
         color: textPrimary,
         letterSpacing: -1.5,
         height: 1.12,
       ),
-      displayMedium: GoogleFonts.nunito(
+      displayMedium: AppFonts.nunito(
         fontSize: 45,
         fontWeight: FontWeight.w700,
         color: textPrimary,
         letterSpacing: -0.5,
         height: 1.16,
       ),
-      displaySmall: GoogleFonts.nunito(
+      displaySmall: AppFonts.nunito(
         fontSize: 36,
         fontWeight: FontWeight.w700,
         color: textPrimary,
@@ -280,21 +284,21 @@ class AppTheme {
         height: 1.22,
       ),
       // Headline -- Screen titles, section headers
-      headlineLarge: GoogleFonts.nunito(
+      headlineLarge: AppFonts.nunito(
         fontSize: 32,
         fontWeight: FontWeight.w700,
         color: textPrimary,
         letterSpacing: -0.5,
         height: 1.25,
       ),
-      headlineMedium: GoogleFonts.nunito(
+      headlineMedium: AppFonts.nunito(
         fontSize: 28,
         fontWeight: FontWeight.w700,
         color: textPrimary,
         letterSpacing: -0.3,
         height: 1.29,
       ),
-      headlineSmall: GoogleFonts.nunito(
+      headlineSmall: AppFonts.nunito(
         fontSize: 24,
         fontWeight: FontWeight.w700,
         color: textPrimary,
@@ -302,21 +306,21 @@ class AppTheme {
         height: 1.33,
       ),
       // Title -- Card titles, list item primaries, dialog titles
-      titleLarge: GoogleFonts.nunito(
+      titleLarge: AppFonts.nunito(
         fontSize: 22,
         fontWeight: FontWeight.w700,
         color: textPrimary,
         letterSpacing: -0.2,
         height: 1.27,
       ),
-      titleMedium: GoogleFonts.nunito(
+      titleMedium: AppFonts.nunito(
         fontSize: 16,
         fontWeight: FontWeight.w700,
         color: textPrimary,
         letterSpacing: 0.1,
         height: 1.5,
       ),
-      titleSmall: GoogleFonts.nunito(
+      titleSmall: AppFonts.nunito(
         fontSize: 14,
         fontWeight: FontWeight.w700,
         color: textPrimary,
@@ -324,21 +328,21 @@ class AppTheme {
         height: 1.43,
       ),
       // Body -- Main readable text
-      bodyLarge: GoogleFonts.nunito(
+      bodyLarge: AppFonts.nunito(
         fontSize: 16,
         fontWeight: FontWeight.w400,
         color: textPrimary,
         letterSpacing: 0.15,
         height: 1.6,
       ),
-      bodyMedium: GoogleFonts.nunito(
+      bodyMedium: AppFonts.nunito(
         fontSize: 14,
         fontWeight: FontWeight.w400,
         color: textPrimary,
         letterSpacing: 0.25,
         height: 1.57,
       ),
-      bodySmall: GoogleFonts.nunito(
+      bodySmall: AppFonts.nunito(
         fontSize: 12,
         fontWeight: FontWeight.w400,
         color: textSecondary,
@@ -346,21 +350,21 @@ class AppTheme {
         height: 1.5,
       ),
       // Label -- Buttons, badges, captions, tab labels
-      labelLarge: GoogleFonts.dmSans(
+      labelLarge: AppFonts.dmSans(
         fontSize: 14,
         fontWeight: FontWeight.w600,
         color: textPrimary,
         letterSpacing: 0.1,
         height: 1.43,
       ),
-      labelMedium: GoogleFonts.dmSans(
+      labelMedium: AppFonts.dmSans(
         fontSize: 12,
         fontWeight: FontWeight.w600,
         color: textSecondary,
         letterSpacing: 0.5,
         height: 1.33,
       ),
-      labelSmall: GoogleFonts.dmSans(
+      labelSmall: AppFonts.dmSans(
         fontSize: 11,
         fontWeight: FontWeight.w500,
         color: textSecondary,

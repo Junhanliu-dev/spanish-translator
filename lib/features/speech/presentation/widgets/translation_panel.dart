@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -103,7 +102,8 @@ class TranslationPanel extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           SelectableText(
             text!,
-            style: GoogleFonts.nunito(
+            style: TextStyle(
+              fontFamily: 'Nunito',
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
@@ -144,7 +144,7 @@ class TranslationPanel extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
             child: Text(
               'Translation appears here',
-              style: GoogleFonts.nunito(
+              style: const TextStyle(fontFamily: 'Nunito', 
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
                 color: AppColors.stone400,

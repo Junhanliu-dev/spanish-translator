@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -78,7 +77,7 @@ class MenuItemRow extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         item.translatedName,
-                        style: GoogleFonts.nunito(
+                        style: const TextStyle(fontFamily: 'Nunito', 
                           fontSize: 12,
                           fontWeight: FontWeight.w400,
                           fontStyle: FontStyle.italic,
@@ -161,7 +160,7 @@ class _ExpandedContent extends StatelessWidget {
         if (item.description != null && item.description!.isNotEmpty) ...[
           Text(
             'Description:',
-            style: GoogleFonts.dmSans(
+            style: const TextStyle(fontFamily: 'DMSans', 
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: AppColors.stone500,
@@ -171,7 +170,7 @@ class _ExpandedContent extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             item.description!,
-            style: GoogleFonts.nunito(
+            style: const TextStyle(fontFamily: 'Nunito', 
               fontSize: 14,
               fontWeight: FontWeight.w400,
               color: AppColors.stone700,
@@ -186,7 +185,7 @@ class _ExpandedContent extends StatelessWidget {
             children: [
               Text(
                 'Pronunciation:',
-                style: GoogleFonts.dmSans(
+                style: const TextStyle(fontFamily: 'DMSans', 
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: AppColors.stone500,
@@ -218,7 +217,7 @@ class _ExpandedContent extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             item.pronunciation!,
-            style: GoogleFonts.dmSans(
+            style: const TextStyle(fontFamily: 'DMSans', 
               fontSize: 13,
               fontWeight: FontWeight.w400,
               color: AppColors.stone500,
@@ -265,7 +264,7 @@ class _AddToOrderButton extends StatelessWidget {
         child: hasItems
             ? Text(
                 '$quantity',
-                style: GoogleFonts.nunito(
+                style: const TextStyle(fontFamily: 'Nunito', 
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: AppColors.white,

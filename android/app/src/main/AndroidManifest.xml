@@ -5,7 +5,8 @@
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
     <application
-        android:label="lingua_viaje"
+        android:label="LinguaViaje"
+        android:description="@string/app_description"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

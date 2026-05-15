@@ -1,0 +1,32 @@
+Travel Spain fearlessly. LinguaViaje is the open-source pocket translator built for food lovers crossing Spain and the Basque Country — point your camera at a menu, hold to record a phrase, or paste any text and get an instant, plain-English explanation of what you are actually about to order.
+
+★ PHOTO MENU TRANSLATION
+Snap a single page or a whole multi-page tasting menu. LinguaViaje extracts every dish with OCR and translates each one side-by-side, complete with a short cultural or ingredient note so you know whether that "morros" is going to surprise you.
+
+★ VOICE TRANSLATION
+Hold to record. LinguaViaje auto-detects whether you are speaking Spanish, Basque (Euskara) or English, transcribes it with Whisper, translates it with GPT-4o, and reads the answer back in a natural-sounding voice — perfect for asking the waiter a question or replying when they ask you one.
+
+★ TEXT TRANSLATION
+Paste a phrase, a dish name, or a whole menu item and get an accurate translation plus a one-line description of the ingredients or origin.
+
+★ ORDER BUILDER
+Tap dishes on a scanned menu to build your order, then play it back out loud in Spanish so the waiter understands exactly what you want — no more pointing and hoping.
+
+★ DISCOVER
+Curated food vocabulary for tapas, pintxos, Basque specialties and regional dishes so you can learn before you fly.
+
+★ HISTORY, OFFLINE
+Every translation is saved on-device and browsable offline. Great for the airport, the train, or that mountain village with no signal.
+
+★ PRIVATE BY DESIGN
+Bring your own OpenAI API key. It is stored in the device's secure enclave and never leaves your phone. No tracking, no accounts, no analytics.
+
+★ BUILT FOR TRAVEL
+- Light and dark Material 3 themes
+- Spanish, Basque (Euskara) and English
+- Works on iOS and Android
+- 100% open source — fork it, learn from it, ship your own language
+
+Made for travelers, language learners, exchange students, expats, foodies, sommeliers, and anyone who has ever stared at a Spanish menu and wondered what "callos" really means.
+
+¡Buen provecho! / On egin!

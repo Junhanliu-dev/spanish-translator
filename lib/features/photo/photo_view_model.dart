@@ -73,8 +73,8 @@ class PhotoViewModel extends ChangeNotifier {
     try {
       final image = await _picker.pickImage(
         source: ImageSource.camera,
-        imageQuality: 90,
-        maxWidth: 2048,
+        imageQuality: 100,
+        maxWidth: 2560,
       );
 
       if (image == null) {
@@ -100,8 +100,8 @@ class PhotoViewModel extends ChangeNotifier {
     try {
       final image = await _picker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 90,
-        maxWidth: 2048,
+        imageQuality: 100,
+        maxWidth: 2560,
       );
 
       if (image == null) {
@@ -125,8 +125,8 @@ class PhotoViewModel extends ChangeNotifier {
     try {
       final image = await _picker.pickImage(
         source: ImageSource.camera,
-        imageQuality: 90,
-        maxWidth: 2048,
+        imageQuality: 100,
+        maxWidth: 2560,
       );
       return image?.path;
     } catch (_) {
@@ -139,8 +139,8 @@ class PhotoViewModel extends ChangeNotifier {
     try {
       final image = await _picker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 90,
-        maxWidth: 2048,
+        imageQuality: 100,
+        maxWidth: 2560,
       );
       return image?.path;
     } catch (_) {
